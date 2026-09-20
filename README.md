@@ -45,7 +45,8 @@ first run. Everything in it is made up.
 ## Where it runs
 
 Verified on **Cloudflare Workers** (D1), **Railway** and **Render** (both on
-[Turso](https://turso.tech)) — same code, same schema, no Dockerfile.
+[Turso](https://turso.tech)) — same code, same schema, no Dockerfile. Fly.io
+is documented but untested; a PR from anyone who runs it there is welcome.
 `scripts/smoke-test.sh <url>` checks a deployment end to end. See
 [`docs/DEPLOY.md`](docs/DEPLOY.md), which also documents the two build
 failures worth knowing about before your first deploy.

@@ -10,7 +10,12 @@ the same schema:
 | Cloudflare Workers | Live, running a real trip | D1 |
 | Railway | Verified — built, deployed, smoke-tested | Turso |
 | Render | Verified — built, deployed, smoke-tested | Turso |
-| Fly.io | **Untested** — wants a Dockerfile, which nobody has written | Turso |
+| Fly.io | **Untested — help wanted** | Turso |
+
+Fly.io is documented from its own docs and has never been deployed from
+this repo. It wants a Dockerfile, which nobody here has written. If you get
+it running, a PR correcting that section — and this table — is welcome; the
+notes below are a starting point, not a tested path.
 
 Railway and Render were chosen on popularity and on taking this repo as-is:
 both build with `npm run build` and run `npm start` against
@@ -200,7 +205,11 @@ form. Steps 1–2 collapse into that.
    Railway's step 4 (Render's shell: `render exec` from the dashboard, or
    just run it locally).
 
-## Fly.io + Turso
+## Fly.io + Turso — untested, help wanted
+
+Nobody has run this. Everything below is read off Fly's documentation and
+from how the Node entrypoint behaves elsewhere; expect it to be wrong
+somewhere. If you work it out, please send a PR with the corrections.
 
 Fly wants either a `Dockerfile` or its own generated one; neither exists in
 this repo yet, so `fly launch` from `apps/api`'s perspective needs a

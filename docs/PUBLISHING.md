@@ -86,8 +86,27 @@ so each sync is a reviewable record. **It is not a safety boundary**: pushing
 that branch publishes its contents, and a PR branch on a public repo is visible
 to anyone. Step 4 is the boundary.
 
-The public repo is `SchenkTech/golf-trip`; override with `PUBLIC_REPO` and
-`PUBLIC_DIR` if that ever changes.
+The public repo is `SchenkTech/golf-trip`, cloned at `~/git-projects/golf-trip`;
+override with `PUBLIC_REPO` and `PUBLIC_DIR` if that ever changes.
+
+**Push over SSH.** A `gh`-issued HTTPS token usually lacks the `workflow`
+scope, and GitHub refuses any push that creates or changes a file under
+`.github/workflows/` without it. If port 22 is blocked on the network you're
+on, either wait it out or `gh auth refresh -s workflow` — do not work around it
+by dropping the workflow from the snapshot.
+
+## When the public repo changes on its own
+
+The published repo has Renovate on it and can take outside PRs, so its `main`
+will sometimes contain commits that never existed here. The sync is a snapshot
+with `rsync --delete` behind it, so publishing over those would silently revert
+them.
+
+`publish-public.sh` refuses to run when it finds a commit on the public `main`
+whose message isn't one of its own, and names them. Cherry-pick them back here
+first (below), then sync. That is the same rule as everything else in this
+file: the private repo is the source of truth, so anything that is only public
+has to come home before the next snapshot goes out.
 
 ## Pulling a change back
 

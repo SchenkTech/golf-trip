@@ -108,6 +108,13 @@ first (below), then sync. That is the same rule as everything else in this
 file: the private repo is the source of truth, so anything that is only public
 has to come home before the next snapshot goes out.
 
+## Merging a sync PR
+
+Squash-merge it. The guard above recognises this repo's own commits by
+subject (`Initial public release`, `Sync from upstream …`), and a squash
+keeps the PR title as the commit subject. A regular merge commit
+("Merge pull request #N from …") would trip the guard on the next sync.
+
 ## Pulling a change back
 
 An outside contribution, or a fix made in the public repo:

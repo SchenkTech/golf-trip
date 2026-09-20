@@ -15,5 +15,8 @@
     "build": "npm run build --workspaces --if-present",
     "start": "npm run node:start --workspace=apps/api",
     "migrate": "npm run db:migrate:node --workspace=apps/api"
+  },
+  "devDependencies": {
+    "railway": "^3.11.0"
   }
 }

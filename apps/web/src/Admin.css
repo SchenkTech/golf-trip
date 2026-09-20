@@ -1,0 +1,503 @@
+@import "./theme.css";
+@import "./Rules.css";
+
+.admin-error {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--side-red);
+}
+
+.admin-signin-btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 12px 20px;
+  background: var(--navy);
+  color: var(--navy-ink);
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.admin-signout-btn {
+  border: none;
+  background: none;
+  color: var(--side-blue-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.admin-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 480px) {
+  .admin-teams {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-team {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.admin-team h2 {
+  margin: 0 0 10px;
+  font-family: var(--display-font);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.admin-team.side-red h2 {
+  color: var(--side-red);
+}
+
+.admin-team.side-blue h2 {
+  color: var(--side-blue);
+}
+
+.admin-row,
+.admin-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.admin-row:first-of-type {
+  border-top: none;
+}
+
+.admin-input {
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.admin-input-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-input-hcp {
+  width: 56px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-icon-btn {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.admin-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-icon-danger {
+  color: var(--side-red);
+}
+
+.admin-add-row {
+  margin-top: 4px;
+}
+
+.admin-round-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.admin-rounds {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 4px 14px;
+}
+
+.admin-round-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--display-font);
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.admin-round-sub {
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.admin-round-unit {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-dim);
+  width: 64px;
+}
+
+.admin-text-btn {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-text-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-clear-all-btn {
+  width: 100%;
+  margin-bottom: 12px;
+  border-color: var(--side-red);
+}
+
+.admin-testing-round {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 8px;
+}
+
+.admin-testing-round .admin-row {
+  border-top: 1px solid var(--rule);
+  padding: 8px 0;
+}
+
+.admin-testing-round .admin-row:first-of-type {
+  border-top: none;
+}
+
+.admin-select {
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.admin-event-picker {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-event-picker .admin-select {
+  flex: 1;
+  min-width: 200px;
+  font-family: var(--display-font);
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.admin-new-event,
+.admin-new-course {
+  margin-top: 10px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.admin-input-wide {
+  width: 200px;
+  max-width: 100%;
+}
+
+.admin-round-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.admin-round-row:first-of-type {
+  border-top: none;
+}
+
+.admin-round-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-input-tee {
+  width: 76px;
+}
+
+.admin-input-split {
+  width: 90px;
+}
+
+.admin-add-round {
+  margin-top: 8px;
+  padding: 10px 0 0;
+}
+
+.admin-add-course {
+  margin-top: 10px;
+}
+
+.admin-holes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.admin-hole-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+
+.admin-hole-num {
+  flex: none;
+  width: 18px;
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+.admin-input-hole {
+  width: 36px;
+  padding: 4px 2px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-match-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+@media (max-width: 480px) {
+  .admin-match-teams {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-match-team {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.admin-match-team.side-red {
+  border-left: 3px solid var(--side-red);
+}
+
+.admin-match-team.side-blue {
+  border-left: 3px solid var(--side-blue);
+}
+
+.admin-match-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.admin-match-player span {
+  flex: 1;
+}
+
+.admin-add-match {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--rule);
+}
+
+.admin-scores-editor {
+  display: grid;
+  gap: 4px;
+  align-items: center;
+  margin: 8px 0 12px;
+  padding: 10px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.admin-scores-corner {
+  min-width: 24px;
+}
+
+.admin-scores-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.admin-scores-header.side-red {
+  color: var(--side-red);
+}
+
+.admin-scores-header.side-blue {
+  color: var(--side-blue);
+}
+
+.admin-scores-hole {
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-scores-editor .admin-input-hole {
+  width: 100%;
+  min-width: 32px;
+}
+
+.admin-rule-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.admin-rule-row:first-of-type {
+  border-top: none;
+}
+
+.admin-rule-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-rule-fields .admin-input-wide {
+  flex: 1;
+  min-width: 140px;
+  width: auto;
+}
+
+/** Stands in for the holder/reason inputs a derived award doesn't have --
+ *  see AwardRow. Dimmed because it's an explanation, not a control. */
+.admin-award-auto {
+  flex: 1;
+  min-width: 140px;
+  align-self: center;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.admin-add-rule {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--rule);
+}
+
+.admin-matchup-label {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.admin-strokes-badge {
+  margin-left: 2px;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--side-red-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-toggle {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+.admin-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--side-blue);
+}
+
+.admin-scorer-field {
+  margin-top: 4px;
+}
+
+.admin-scorer-row {
+  display: block;
+  margin-top: 2px;
+}
+
+.admin-select-inline {
+  padding: 2px 6px;
+  font-size: 12px;
+}

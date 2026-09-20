@@ -1,0 +1,41 @@
+@import "./theme.css";
+
+/* Its own fixed corner element rather than a row item -- Nav moved to a
+ * bottom tab bar (Nav.css), which has no natural spot left for a page-level
+ * action like this, so it floats top-right instead, same trick as
+ * ThemeToggle's bottom-right placement. */
+.install-wrap {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 20;
+}
+
+.install-btn {
+  border: 1px solid var(--side-blue);
+  background: var(--card);
+  color: var(--side-blue-ink);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+}
+
+.install-ios-help {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  z-index: 30;
+}

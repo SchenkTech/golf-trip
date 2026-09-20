@@ -1,0 +1,299 @@
+@import "./theme.css";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.board {
+  max-width: 640px;
+  margin: 0 auto;
+  /* Clears the fixed bottom nav (Nav.css) on every screen that renders it --
+   * MatchScreen has no bottom nav but keeps its own bottom padding instead. */
+  padding: 20px 16px calc(76px + env(safe-area-inset-bottom));
+}
+
+.loading,
+.load-error {
+  padding-top: 40vh;
+  text-align: center;
+  color: var(--ink-dim);
+}
+
+/* The Board's navy header band -- the event identity, the score and the
+ * award chips all sit inside one block of team colour rather than loose on
+ * the sand. The white bubbles within it (.team-tile, .award-chip) are
+ * where the "raised card" treatment lives, and they read harder against
+ * navy than they ever did against tan. */
+.hero {
+  background: var(--navy);
+  color: var(--navy-ink);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+}
+
+.event-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--navy-ink) 45%, transparent);
+}
+
+.event-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy-ink);
+}
+
+.event-dates {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--navy-ink-dim);
+}
+
+.score-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* White bubble on the sand ground, bordered in the team's own side color --
+ * each team's own text colour (see Teams.css's identical --side-red/
+ * --side-blue convention) -- that red and blue are the accent pair the
+ * whole app runs on now (see theme.css). */
+.team-tile {
+  background: var(--card);
+  /* The hero band sets a near-white text colour for itself; a white bubble
+   * sitting inside it has to set its own back, or anything that doesn't
+   * name a colour (a team name with no side, on History's all-time hero)
+   * comes out white on white. */
+  color: var(--ink);
+  /* On the navy band a white bubble needs no outline of its own -- the
+   * border is here for the side colours below to take over. */
+  border: 2px solid color-mix(in srgb, var(--navy-ink) 25%, transparent);
+  border-radius: 14px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-shadow: var(--shadow);
+}
+
+.team-tile.side-red {
+  border-color: var(--side-red);
+}
+
+.team-tile.side-blue {
+  border-color: var(--side-blue);
+}
+
+.team-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.team-name {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.team-tile.side-red .team-name {
+  color: var(--side-red);
+}
+
+.team-tile.side-blue .team-name {
+  color: var(--side-blue);
+}
+
+.team-points {
+  font-size: 34px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.points-available {
+  text-align: center;
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--navy-ink-dim);
+}
+
+.awards-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--navy-ink) 20%, transparent);
+}
+
+.award-chip {
+  flex: 1;
+  min-width: 120px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: var(--shadow);
+}
+
+.award-name {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+}
+
+/* A person's name, on a white chip -- red, the colour this palette gives
+ * to "who". The chip can't know which side they're on (the API sends a
+ * name, not a team), so it doesn't pretend to. */
+.award-holder {
+  font-family: var(--display-font);
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  color: var(--side-red-ink);
+}
+
+.award-reason {
+  font-size: 11px;
+  color: var(--ink-dim);
+  min-height: 1em;
+}
+
+.rounds-list {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* No card chrome here either -- see .hero above. The day header sits on
+ * the sand ground; .match-card below is the white bubble. */
+.round-card {
+  padding: 0;
+}
+
+.round-header {
+  margin-bottom: 14px;
+}
+
+.round-header h3 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: 32px;
+  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.round-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+/* A grid of white match-cards, same shape as stolentee's Match Summary
+ * cards -- a leading-side-tinted standing badge on top, both sides' names
+ * below. Replaces the old flat list-with-separators layout. */
+.round-matches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.match-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow);
+}
+
+.match-standing-badge {
+  text-align: center;
+  padding: 8px 6px;
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.match-card.leading-red .match-standing-badge {
+  background: color-mix(in srgb, var(--side-red) 24%, var(--card));
+  color: var(--side-red);
+}
+
+.match-card.leading-blue .match-standing-badge {
+  background: color-mix(in srgb, var(--side-blue) 24%, var(--card));
+  color: var(--side-blue);
+}
+
+.match-standing-badge.not-started {
+  color: var(--ink-dim);
+  font-weight: 600;
+  background: var(--card);
+}
+
+.match-card-sides {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px 12px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.match-card-side {
+  font-weight: 600;
+}
+
+.match-card-side.side-red {
+  color: var(--side-red);
+}
+
+.match-card-side.side-blue {
+  color: var(--side-blue);
+}
+
+.match-vs {
+  font-size: 10px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

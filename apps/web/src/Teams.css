@@ -1,0 +1,142 @@
+@import "./theme.css";
+@import "./Rules.css";
+
+.teams-list {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 560px) {
+  .teams-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The same white bubble the Board and Matches use (--card, not the tan
+ * --surface) -- a roster card and a match card are the same kind of
+ * object, and they sit on the same sand page. */
+.team-card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.team-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.team-card-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.team-card-header h2 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* Side is match-engine vocabulary (RED/BLUE), not team branding -- see
+ * schema.ts -- but on the roster it's the one place a color legitimately
+ * helps tell the two sides apart at a glance, using the same --side-red/
+ * --side-blue tokens the Match/Enter screen's dots already use. */
+.team-card.side-red .team-card-header h2 {
+  color: var(--side-red);
+}
+
+.team-card.side-blue .team-card-header h2 {
+  color: var(--side-blue);
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.roster-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--rule);
+  font-size: 16px;
+}
+
+.roster-row:first-child {
+  border-top: none;
+}
+
+.roster-num {
+  font-family: var(--display-font);
+  font-size: 15px;
+  color: var(--ink-dim);
+  width: 18px;
+  flex: none;
+}
+
+.roster-name-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.roster-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.roster-record {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.captain-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Their own team's colour -- the card already knows which side it is, so
+ * the captain's mark says so rather than being a neutral badge. */
+.team-card.side-red .captain-badge {
+  background: var(--side-red);
+}
+
+.team-card.side-blue .captain-badge {
+  background: var(--side-blue);
+}
+
+.roster-hcp {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}

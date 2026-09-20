@@ -1,0 +1,1 @@
+ALTER TABLE `round` ADD `segment_points` text;

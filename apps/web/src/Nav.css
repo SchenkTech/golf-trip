@@ -1,0 +1,45 @@
+@import "./theme.css";
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  /* Navy, like the header band at the other end of the screen -- the app's
+   * chrome is one colour top and bottom, with the sand page between. */
+  background: var(--navy);
+  border-top: 1px solid var(--navy-surface);
+  padding: 6px 2px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  box-shadow: 0 -2px 8px rgba(11, 37, 69, 0.25);
+  /* Same iOS fixed-position fix as ThemeToggle -- without a compositor
+   * layer of its own, Safari lets a `position: fixed` bar visually lag
+   * behind an active touch-scroll instead of staying pinned. */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.bottom-nav-link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  border-radius: 10px;
+  color: var(--navy-ink-dim);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* Team blue is "this one" everywhere in the app -- the selected day tab,
+ * the focus ring, and here the tab you're on. The bright variant, because
+ * this sits on navy. */
+.bottom-nav-link.active {
+  color: var(--side-blue-bright);
+}

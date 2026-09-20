@@ -1,0 +1,390 @@
+@import "./theme.css";
+
+.match-screen {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px 56px;
+  color: var(--ink);
+}
+
+.back-link {
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 14px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.who-title {
+  font-size: 20px;
+  margin: 16px 0;
+}
+
+.code-hint {
+  margin: -8px 0 16px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.code-input {
+  width: 100%;
+  padding: 16px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+.code-input:focus {
+  outline: 2px solid var(--side-blue);
+  outline-offset: -1px;
+}
+
+.code-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #b1543f;
+}
+
+/* The one button on the screen that commits something -- filled navy, not
+ * another card like the name buttons under it. */
+/* Two-class selector on purpose: the element carries both, and plain
+ * `.code-submit` would lose the background to `.who-option` further down
+ * the file on equal specificity. */
+.who-option.code-submit {
+  width: 100%;
+  margin-top: 14px;
+  text-align: center;
+  font-weight: 700;
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--navy-ink);
+  justify-content: center;
+}
+
+.code-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.who-list {
+  display: grid;
+  gap: 10px;
+}
+
+.who-option {
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.scorer-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: var(--side-red);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.scorer-notice {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.match-header {
+  text-align: center;
+  padding: 8px 0 16px;
+}
+
+.match-course {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Plain ink: the standing flips between sides as the match turns, so
+ * painting it either team's colour would be wrong half the time. The
+ * segment chips under it carry the detail. */
+.match-live-standing {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-top: 4px;
+}
+
+.segments-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.segment-chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  background: var(--surface-2);
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+
+.offline-notice {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--side-red-ink);
+}
+
+.hole-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 10px 6px;
+  margin-bottom: 16px;
+}
+
+.hole-nav button {
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.hole-nav button:disabled {
+  color: var(--rule);
+  cursor: default;
+}
+
+.hole-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hole-number {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.hole-detail {
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-top: 2px;
+}
+
+.player-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.player-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.player-score-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.side-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+}
+
+/* Side is engine vocabulary (RED/BLUE), not a UI color scheme -- see
+ * schema.ts's note on team.color -- so these two dots are only meant to
+ * separate "this player" from "that player" at a glance, not to carry team
+ * branding the way the logos already do. Colors come from theme.css's
+ * --side-red/--side-blue, shared with the Teams screen. */
+.side-dot.side-red {
+  background: var(--side-red);
+}
+
+.side-dot.side-blue {
+  background: var(--side-blue);
+}
+
+.stroke-dot {
+  min-width: 6px;
+  min-height: 6px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--side-red);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* A stroke count of 2+ needs room for a digit -- still reads as the same
+   dot, just big enough to hold a character when a hole gives more than
+   one shot (see MatchScreen.tsx's shotsHere). */
+.stroke-dot:not(:empty) {
+  width: 15px;
+  height: 15px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Cold hands, one bar of signal (docs/SPEC.md) -- these are the most
+ * pressed controls in the app, so they're the most obviously pressable:
+ * filled navy, team blue while your thumb is down. */
+.stepper-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  font-weight: 700;
+  border: 1px solid var(--navy);
+  border-radius: 10px;
+  background: var(--navy);
+  color: var(--navy-ink);
+  cursor: pointer;
+}
+
+.stepper-btn:active {
+  background: var(--side-blue);
+  border-color: var(--side-blue);
+  color: #fff;
+}
+
+.stepper-value {
+  width: 40px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.view-toggle button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--navy);
+  border-radius: 8px;
+  background: var(--navy);
+  color: var(--navy-ink-dim);
+  font-family: var(--display-font);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.view-toggle button.active {
+  background: var(--side-blue);
+  border-color: var(--side-blue);
+  color: #fff;
+}
+
+.match-card-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+.match-card-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-card-table th,
+.match-card-table td {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.match-card-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink-dim);
+}
+
+.match-card-table th.side-red,
+.match-card-table td.side-red {
+  color: var(--side-red);
+}
+
+.match-card-table th.side-blue,
+.match-card-table td.side-blue {
+  color: var(--side-blue);
+}
+
+.card-hole-col {
+  color: var(--ink) !important;
+  font-weight: 700;
+}
+
+.match-card-table sup {
+  margin-left: 1px;
+  color: var(--side-red-ink);
+  font-size: 9px;
+}
+
+.match-card-table tr.won-red {
+  background: color-mix(in srgb, var(--side-red) 18%, transparent);
+}
+
+.match-card-table tr.won-blue {
+  background: color-mix(in srgb, var(--side-blue) 18%, transparent);
+}
+
+.card-legend {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--ink-dim);
+}

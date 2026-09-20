@@ -1,0 +1,13 @@
+{
+  "name": "golfclassic",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run node:start --workspace=apps/api",
+    "migrate": "npm run db:migrate:node --workspace=apps/api"
+  }
+}

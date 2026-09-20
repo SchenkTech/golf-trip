@@ -1,0 +1,127 @@
+@import "./theme.css";
+
+/* Every screen but the Board opens with this band (the Board has .hero,
+ * which is the same idea carrying a score). Navy, so the app has a
+ * consistent piece of team colour at the top of it instead of a tan page
+ * that starts with tan. */
+.page-header {
+  background: var(--navy);
+  color: var(--navy-ink);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: 52px;
+  line-height: 0.9;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--navy-ink);
+}
+
+/* The same class is also used for plain explanatory lines in the body of
+ * a page (Matches' "No rounds set up yet"), which sit on the sand -- so
+ * the navy-side colour is scoped to the header, not the class. */
+.page-sub {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+.page-header .page-sub {
+  color: var(--navy-ink-dim);
+}
+
+/* Admin's "signed in as … / sign out" lives inside the header band, where
+ * the page-level blue would disappear. */
+.page-header .admin-signout-btn {
+  color: var(--side-blue-bright);
+}
+
+.rules-page {
+  padding-bottom: 40px;
+}
+
+.rules-section {
+  margin-top: 28px;
+}
+
+.rules-section h2 {
+  margin: 0 0 10px;
+  font-family: var(--display-font);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--side-blue-ink);
+}
+
+.rules-section p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+/* White bubble, same as the Board's and Matches' cards -- see Teams.css. */
+.rule-card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 16px;
+  /* Every other white bubble in the app is raised off the sand; without
+     this one these read as holes cut in the page rather than cards. */
+  box-shadow: var(--shadow);
+}
+
+.rule-card h3 {
+  margin: 0 0 6px;
+  font-family: var(--display-font);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--side-blue-ink);
+}
+
+.rule-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.rules-table-wrap {
+  overflow-x: auto;
+}
+
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rules-table th,
+.rules-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.rules-table th {
+  color: var(--ink-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}

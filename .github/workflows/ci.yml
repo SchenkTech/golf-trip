@@ -1,0 +1,45 @@
+# Tests, typechecks and a real build on every push and pull request.
+#
+# This runs in both the private repo and the published one (docs/PUBLISHING.md)
+# -- it deploys nothing and needs no secrets, so it is safe to be the only
+# workflow a fork inherits. The deploy workflow is private-only.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      # The scoring engine, the award rules and the side mapping. These are
+      # the three places where being wrong is silent rather than loud.
+      - name: Test
+        run: npm test
+
+      - name: Typecheck API
+        working-directory: apps/api
+        run: npx tsc --noEmit
+
+      - name: Typecheck web
+        working-directory: apps/web
+        run: npx tsc --noEmit
+
+      # The build is part of the check: apps/web/dist is what the Worker
+      # serves, so a build that fails is a site that cannot deploy.
+      - name: Build web
+        working-directory: apps/web
+        run: npm run build

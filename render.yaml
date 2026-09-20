@@ -1,0 +1,33 @@
+# Render Blueprint -- "New > Blueprint", point it at this repo, and Render
+# reads this instead of you filling in a form. See docs/DEPLOY.md.
+#
+# The database is Turso (libSQL), not Render's Postgres: this app is SQLite
+# all the way down (docs/HOSTING.md), and apps/api/src/db/client.ts only
+# knows D1 and libSQL. There is nothing to provision here.
+services:
+  - type: web
+    name: golf-trip
+    runtime: node
+    plan: free # spins down when idle; first hit after that takes ~50s
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # Set these in the Render dashboard -- sync:false means "ask me, don't
+      # read it from this file", which is how the secrets stay out of git.
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_AUTH_TOKEN
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false

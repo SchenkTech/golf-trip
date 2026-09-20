@@ -1,0 +1,32 @@
+{
+  "name": "@gc/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply golfclassic --local",
+    "db:migrate:remote": "wrangler d1 migrations apply golfclassic --remote",
+    "db:generate": "drizzle-kit generate",
+    "typecheck": "tsc --noEmit",
+    "node:dev": "tsx watch src/node.ts",
+    "node:start": "tsx src/node.ts",
+    "db:migrate:node": "tsx scripts/migrate-node.ts",
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts"
+  },
+  "dependencies": {
+    "@gc/scoring": "*",
+    "@hono/node-server": "^2.1.1",
+    "@libsql/client": "^0.18.0",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260920.1",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.13",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.135.0"
+  }
+}

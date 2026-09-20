@@ -1,0 +1,63 @@
+# Copy this to wrangler.toml and fill in your own values. wrangler.toml is
+# the real, private config for one deployment (see docs/PUBLISHING.md); this
+# file is the shape of it, with nothing real in it.
+#
+# Nothing secret belongs in either file. GOOGLE_CLIENT_SECRET and
+# SESSION_SECRET are set with `npx wrangler secret put <NAME>` and live in
+# Cloudflare, never in the repo.
+
+name = "golf-trip-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-17"
+
+# Create the database once with `npx wrangler d1 create <your-db-name>`, then
+# paste the database_id that command prints. Local dev never touches the
+# remote database -- `wrangler dev` runs this same binding against a local
+# .sqlite file, so nothing below changes between local and prod.
+[[d1_databases]]
+binding = "DB"
+database_name = "YOUR_DATABASE_NAME"
+database_id = "YOUR_DATABASE_ID"
+# drizzle-kit writes migrations to ./drizzle (drizzle.config.ts), not
+# wrangler's own ./migrations default -- point it there rather than keep two
+# migration folders in sync by hand.
+migrations_dir = "drizzle"
+
+# apps/web's build output. This one Worker serves both the API and the site:
+# run_worker_first routes exactly the paths this Worker actually handles to
+# Hono; everything else (the SPA, its assets, the logos under
+# apps/web/public/logos) is served as a static asset with no Worker
+# invocation, and single-page-application fallback means client-side routes
+# like /matches/abc still resolve to index.html instead of 404ing.
+[assets]
+directory = "../web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+# Your own hostname(s). Delete this block entirely to run on the default
+# <name>.<subdomain>.workers.dev URL instead.
+#
+# Custom Domains want the bare hostname, no /* suffix -- unlike a plain
+# Workers Route, a wildcard operator is not allowed here at all, since a
+# custom domain claims the whole hostname rather than matching paths under
+# it. The domain's nameservers have to be on Cloudflare for this to work.
+[[routes]]
+pattern = "golf.example.com"
+custom_domain = true
+
+# Admin auth is native Google OAuth (src/routes/auth.ts): a session cookie
+# checked per-request (src/lib/adminAuth.ts) gates /admin and /api/admin/* on
+# this one hostname, so the public board stays public.
+#
+# Create an OAuth client in Google Cloud Console and register
+# GOOGLE_REDIRECT_URI below as one of its authorized redirect URIs, exactly.
+# GOOGLE_CLIENT_ID is not secret (Google's own docs say so -- it's sent to
+# the browser on every OAuth redirect).
+#
+# ADMIN_EMAILS: add an address here, redeploy, done -- no dashboard, just
+# this one comma-separated list.
+[vars]
+GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com"
+ADMIN_EMAILS = "you@example.com"
+GOOGLE_REDIRECT_URI = "https://golf.example.com/api/auth/google/callback"

@@ -1,0 +1,1 @@
+ALTER TABLE `historical_year` ADD `winner` text;

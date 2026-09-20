@@ -1,0 +1,1 @@
+ALTER TABLE `match` ADD `designated_scorer_id` text REFERENCES player(id);

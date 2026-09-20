@@ -1,0 +1,102 @@
+@import "./theme.css";
+@import "./Rules.css";
+
+.years-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.year-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.year-round-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.year-scores-title {
+  margin: 16px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.year-scores-wrap {
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.year-scores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.year-scores-table th,
+.year-scores-table td {
+  text-align: left;
+  padding: 7px 10px;
+  border-top: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.year-scores-table th {
+  color: var(--ink-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  border-top: none;
+}
+
+.year-scores-table td:first-child {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.year-scores-table td:last-child {
+  color: var(--side-blue-ink);
+  font-weight: 700;
+}
+
+/** Footnote under the all-time averages -- explains an absence (why a
+ *  scramble round isn't in anyone's average) rather than labelling a
+ *  number, so it sits below the table at the size of small print. */
+.all-time-note {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+/** The declared front/back/overall winners on a historical match card --
+ *  for those years that IS the result, so it belongs on the card, but it's
+ *  reference detail rather than the headline. */
+.hist-segments {
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ink-dim);
+}
+
+/** The year in the "every trip" table -- a way through to that trip's
+ *  matches (Matches.tsx's trip picker), so it has to look like one without
+ *  turning the table into a wall of blue. */
+.year-link {
+  color: var(--side-blue-ink);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--side-blue-ink) 40%, transparent);
+}

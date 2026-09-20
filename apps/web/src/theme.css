@@ -1,0 +1,110 @@
+/* Design tokens, shared by every screen.
+ *
+ * Light mode's neutral scale is sand/tan -- the event logo's own
+ * background (the crab tin badge sits on a warm cream, not white or grey)
+ * -- so the app's "paper" matches the badge everyone already associates
+ * with this trip.
+ *
+ * Navy is the app's *chrome*: every screen header, the bottom nav, and
+ * anything you press (day tabs, steppers, the trip picker). Sand stays the
+ * paper those sit on, and white/--card stays the raised bubble a result
+ * lives in. It used to be reserved for one or two branded panels, which
+ * left the app reading as tan-on-tan, with not enough colour anywhere.
+ * The accents are the two teams' own colours -- see --side-red/--side-blue
+ * below for which does what. There is no gold in this palette any more.
+ *
+ * Dark mode keeps its own earlier navy-black world (not sand-toned) --
+ * tried a warm-dark version of the same sand palette and it read as muddy,
+ * so light and dark intentionally diverge in hue here, not just lightness.
+ *
+ * Both palettes are structured for three states: no preference expressed
+ * (bare :root, light), system dark (@media(prefers-color-scheme)), and an
+ * explicit toggle (the [data-theme] blocks, driven by src/lib/theme.ts). */
+
+:root {
+  --ground: #f4e8d2;
+  --surface: #ece0c5;
+  --surface-2: #e1d0ac;
+  --ink: #2b2013;
+  --ink-dim: #6e5d40;
+  --rule: #d8c7a3;
+  --navy: #0b2545;
+  --navy-surface: #16345c;
+  --navy-ink: #f5f4f1;
+  --navy-ink-dim: #b7c4da;
+  --shadow: 0 1px 2px rgba(43, 32, 19, 0.15);
+
+  /* A true white "bubble" card, distinct from --surface's tan -- the Board
+   * and Matches screens sit these directly on the sand --ground (see
+   * App.css's .hero/.team-tile/.match-card) rather than the tan-on-tan
+   * layering used elsewhere. Dark mode has no equivalent "whiter than
+   * surface" step that still reads as a card, so it just reuses --surface. */
+  --card: #ffffff;
+
+  /* The two teams' own red and blue -- the app's only accent colours.
+   * They started as match-engine vocabulary (RED/BLUE, see schema.ts's
+   * note on team.color) for telling one side from the other, and they now
+   * do the accent work too, because these are the two colours this trip
+   * actually has: the same red and blue the team names are already drawn
+   * in.
+   *
+   * Each has three values, because the same hue can't serve every
+   * background: the flat colour for fills and team names, an -ink variant
+   * dark enough for small text on the sand page, and a -bright variant
+   * light enough to read on the navy chrome. Pick by what it sits on, not
+   * by feel.
+   *
+   * Which of the two, where: BLUE is the interface -- the tab you're on,
+   * the link, the focus ring, the button you just pressed. RED is the
+   * person or the moment -- a captain's badge, the designated scorer, a
+   * shot received, an award holder, a warning. Neither is decoration; if a
+   * thing belongs to one side, it wears that side's colour instead. */
+  --side-red: #b1543f;
+  --side-blue: #3f7c9e;
+  --side-red-ink: #b1543f;
+  --side-blue-ink: #2f6180;
+  --side-red-bright: #e2856c;
+  --side-blue-bright: #85c2e2;
+
+  /* A big, condensed display face for page titles and day headers --
+   * borrowed from the group's own prototype (docs/SPEC.md treats that as a
+   * real source, not a rough sketch). Body copy stays
+   * on the system stack; this is for headlines only. */
+  --display-font: "Anton", "Arial Narrow", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0e1620;
+    --surface: #1a2532;
+    --surface-2: #273445;
+    --ink: #e6eaf0;
+    --ink-dim: #96a4b6;
+    --rule: #334357;
+    --side-red-ink: #e2856c;
+    --side-blue-ink: #85c2e2;
+    --navy: #0e2e57;
+    --navy-surface: #1c3f6e;
+    --navy-ink: #ede9e2;
+    --navy-ink-dim: #a9bad4;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --card: #1a2532;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0e1620;
+  --surface: #1a2532;
+  --surface-2: #273445;
+  --ink: #e6eaf0;
+  --ink-dim: #96a4b6;
+  --rule: #334357;
+  --side-red-ink: #e2856c;
+  --side-blue-ink: #85c2e2;
+  --navy: #0e2e57;
+  --navy-surface: #1c3f6e;
+  --navy-ink: #ede9e2;
+  --navy-ink-dim: #a9bad4;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --card: #1a2532;
+}

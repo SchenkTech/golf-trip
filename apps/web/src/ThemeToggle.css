@@ -1,0 +1,40 @@
+@import "./theme.css";
+
+/* A single round button -- see ThemeToggle.tsx for why this stopped being
+ * a three-way pill. Small enough that it covers almost nothing, navy so it
+ * reads as a control rather than as part of the page. */
+.theme-toggle {
+  position: fixed;
+  /* Clears the fixed bottom nav (Nav.css) -- MatchScreen has no bottom nav
+   * and sits a little higher than it strictly needs to there, which is
+   * harmless (no overlap either way) and keeps this one offset simple. */
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  background: var(--navy);
+  border: 1px solid var(--navy-surface);
+  border-radius: 50%;
+  color: var(--navy-ink);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  z-index: 20;
+  /* iOS Safari doesn't track a plain `position: fixed` element in real
+   * time during an active touch-scroll -- it visually lags at its old
+   * spot until the gesture ends, which is what makes it look "skewed"
+   * mid-page in a screenshot taken while scrolling. Promoting it to its
+   * own compositor layer makes iOS keep it pinned smoothly instead. */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Same blue-while-your-thumb-is-down as every other button (theme.css). */
+.theme-toggle:active {
+  background: var(--side-blue);
+  border-color: var(--side-blue);
+  color: #fff;
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `round` ADD `points_per_match` real;

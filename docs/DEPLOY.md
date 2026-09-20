@@ -1,27 +1,49 @@
 # Deploy
 
 Four ways to run this, in the order the codebase actually supports them.
-Cloudflare is what the original trip runs today and is the only one of the
-four validated against a real deploy.
 
-**Railway and Render are the two being tested next**, chosen on popularity
-and on taking this repo as-is: both run `npm ci && npm run build` then
-`npm start` against `apps/api/src/node.ts`, with no Dockerfile and no code
-changes. Each has a committed config so the dashboard has nothing to guess
-at — `railway.json` and `render.yaml`, both at the repo root.
+**Three are verified against real deploys**, all serving the same app from
+the same schema:
 
-What has actually been verified for that path, locally: the web build, the
-migrations applied to a file-backed libSQL database, the example seed, the
-Node server booting, `/api/health`, the API returning a seeded event, and
-the SPA serving both `/` and a deep link like `/trips/2026`. What has *not*
-been verified is either platform's own build environment, or Turso as the
-database rather than a local file.
+| Target | Status | Database |
+|---|---|---|
+| Cloudflare Workers | Live, running a real trip | D1 |
+| Railway | Verified — built, deployed, smoke-tested | Turso |
+| Render | Verified — built, deployed, smoke-tested | Turso |
+| Fly.io | **Untested** — wants a Dockerfile, which nobody has written | Turso |
 
-Fly.io stays documented but untested — it wants a Dockerfile, which is a
-different shape of work.
+Railway and Render were chosen on popularity and on taking this repo as-is:
+both build with `npm run build` and run `npm start` against
+`apps/api/src/node.ts`, no Dockerfile and no code changes. Each carries a
+committed config so the dashboard has nothing to guess at —
+`.railway/railway.ts` and `render.yaml`.
 
-Expect a wrinkle or two the first time through; this doc gets corrected once
-that happens, not treated as gospel before it does.
+"Verified" here means `scripts/smoke-test.sh` passed against the live URL:
+health, an event fetched through the API, a derived read through the
+scoring path, the SPA shell, client-side route fallback, and admin
+returning 401 rather than data. A green dashboard is not the same claim.
+
+### What actually went wrong the first time
+
+Both failures were on Railway, and neither is guessable from the docs:
+
+1. **`npm ci` in the build command killed the build.** The builder already
+   installs from `package-lock.json` in its own phase, with a cache mounted
+   *inside* `node_modules`. A second `npm ci` deletes that directory out
+   from under the live mount: `EBUSY: resource busy or locked, rmdir
+   '/app/node_modules/.cache'`, exit 240. The build command is the *build*
+   step only.
+2. **Node 18.** With no `engines` field, the builder picked its own
+   default, which is older than this toolchain needs (`workbox-build` wants
+   ≥20, `wrangler` ≥22). `package.json` now pins `>=22`.
+
+A third would have hit next: Railway has no way to declare environment
+variables in config, unlike Render's blueprint, so nothing prompts for
+them. The app exits at boot on the first one missing, and that surfaces as
+a failed healthcheck rather than a readable error.
+
+Render hit none of these — its blueprint collected the variables up front
+and pinned `NODE_VERSION`. That is luck of format, not superiority.
 
 ## The shape of it, once
 
@@ -101,9 +123,9 @@ repo secrets.
 
 1. Install the CLI and sign in: see
    [docs.turso.tech](https://docs.turso.tech/cli/installation).
-2. `turso db create golfclassic`
-3. `turso db show golfclassic --url` → `DATABASE_URL`
-4. `turso db tokens create golfclassic` → `DATABASE_AUTH_TOKEN`
+2. `turso db create golf-trip`
+3. `turso db show golf-trip --url` → `DATABASE_URL`
+4. `turso db tokens create golf-trip` → `DATABASE_AUTH_TOKEN`
 5. With both set locally: `DATABASE_URL=... DATABASE_AUTH_TOKEN=... npm run migrate`
 
 Turso's free tier (as of writing) comfortably covers this app's scale — a

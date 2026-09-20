@@ -1,4 +1,4 @@
-# golfclassic
+# golf-trip
 
 Scoreboard and scoring app for a Ryder-Cup-style buddies golf trip. Ground-up
 rebuild, deliberately small.

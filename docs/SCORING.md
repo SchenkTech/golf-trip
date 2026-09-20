@@ -76,7 +76,7 @@ Worked example — A wins 5&4, B wins the back nine:
 
 ## Porting from the earlier attempt
 
-`golfclassic-api` has a tested implementation of both the Nassau maths and WHS
+The earlier attempt has a tested implementation of both the Nassau maths and WHS
 handicapping (playing handicap, stroke allocation by index, net double bogey
 cap). That logic is correct and worth carrying over. Its 54 scoring tests port
 as the new engine's test suite, and the two behaviours above are covered there.

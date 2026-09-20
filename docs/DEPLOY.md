@@ -111,17 +111,30 @@ dozen players, a few thousand writes over one weekend a year.
 
 ## Railway
 
-`railway.json` at the repo root already sets the build command, start
-command and health check, so steps 2 is usually just confirming what it
-read.
+`.railway/railway.ts` already declares the build command, start command,
+health check and the GitHub source, so step 2 is usually just confirming
+what Railway read. (Railway's older `railway.json` format is deprecated and
+stops being read on 2026-12-01; this repo has already moved off it.)
+
+**IaC is declarative — read the plan before applying.** `railway config
+plan` on a config that omits something Railway already has will offer to
+*remove* it. The first version of this file listed only the build and start
+commands, and the plan offered to disconnect the GitHub repo and delete
+every environment variable on the service. Variables are listed with
+`preserve()` for exactly that reason: declared so they survive, with no
+values in source control.
+
+Evaluating the config needs the `railway` npm package (a devDependency
+here) and CLI 5.42.1+.
 
 **Two things that will bite you**, both learned the hard way on a real
 deploy:
 
-- Let Nixpacks do the install. `buildCommand` is the *build* step only. Add
-  `npm ci` to it and the build dies with `EBUSY: resource busy or locked,
-  rmdir '/app/node_modules/.cache'` — Nixpacks mounts a cache inside
-  `node_modules` and `npm ci` deletes `node_modules` out from under it.
+- Let Railway do the install. The build command is the *build* step only.
+  Add `npm ci` to it and the build dies with `EBUSY: resource busy or
+  locked, rmdir '/app/node_modules/.cache'` — the builder mounts a cache
+  inside `node_modules` and `npm ci` deletes `node_modules` out from under
+  it.
 - Railway has no way to declare environment variables in config, unlike
   Render's blueprint. Nothing prompts you, and the app exits at boot on the
   first missing one, so the deploy fails a healthcheck with no obvious

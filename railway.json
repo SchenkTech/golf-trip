@@ -4,6 +4,7 @@
     "builder": "NIXPACKS",
     "buildCommand": "npm ci && npm run build"
   },
+  "$comment": "Node comes from package.json's engines field (>=22). Nixpacks reads it; without one it picks its own default, which has been older than this codebase expects.",
   "deploy": {
     "startCommand": "npm start",
     "healthcheckPath": "/api/health",

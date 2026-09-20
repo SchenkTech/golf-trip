@@ -1,6 +1,6 @@
 {
-  "name": "Golf Classic",
-  "short_name": "Golf",
+  "name": "Golf Trip",
+  "short_name": "Golf Trip",
   "description": "Live scoreboard and scoring for a Ryder-Cup-style golf trip",
   "start_url": "/",
   "scope": "/",

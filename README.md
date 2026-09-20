@@ -1,4 +1,4 @@
-# Golf Classic
+# Golf Trip
 
 A live scoreboard and scoring app for a Ryder-Cup-style buddies golf trip — two
 teams, a few days, matches worth points, and an all-time record across the years.
@@ -41,5 +41,13 @@ npm run dev --workspace=apps/web    # the PWA, on :5173, proxying /api
 `apps/api/seed-example.sql` sets up an example event — two teams, a fictional
 roster, three rounds on one course — so the app has something to show on the
 first run. Everything in it is made up.
+
+## Where it runs
+
+Verified on **Cloudflare Workers** (D1), **Railway** and **Render** (both on
+[Turso](https://turso.tech)) — same code, same schema, no Dockerfile.
+`scripts/smoke-test.sh <url>` checks a deployment end to end. See
+[`docs/DEPLOY.md`](docs/DEPLOY.md), which also documents the two build
+failures worth knowing about before your first deploy.
 
 MIT licensed — see [`LICENSE`](LICENSE). Fork it and run your own trip's copy.

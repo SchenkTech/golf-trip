@@ -153,7 +153,8 @@ INSERT INTO award (id, event_id, name, enabled, rule, sort_order) VALUES
   ('aw-long', 'e-2027', 'Long Drive', 1, 'MANUAL', 2),
   ('aw-top-lead', 'e-2027', 'Top Dog', 1, 'LEAD_TEAM_MOST_POINTS', 3),
   ('aw-top-trail', 'e-2027', 'Best of the Rest', 1, 'TRAIL_TEAM_MOST_POINTS', 4),
-  ('aw-birdies', 'e-2027', 'Birdie Machine', 1, 'MOST_BIRDIES', 5);
+  ('aw-spoon', 'e-2027', 'Wooden Spoon', 1, 'TRAIL_TEAM_FEWEST_POINTS', 5),
+  ('aw-birdies', 'e-2027', 'Birdie Machine', 1, 'MOST_BIRDIES', 6);
 
 -- ------------------------------------------------------ local rules
 INSERT INTO quick_rule (id, title, body, sort_order) VALUES

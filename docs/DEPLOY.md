@@ -115,8 +115,20 @@ dozen players, a few thousand writes over one weekend a year.
 command and health check, so steps 2 is usually just confirming what it
 read.
 
+**Two things that will bite you**, both learned the hard way on a real
+deploy:
+
+- Let Nixpacks do the install. `buildCommand` is the *build* step only. Add
+  `npm ci` to it and the build dies with `EBUSY: resource busy or locked,
+  rmdir '/app/node_modules/.cache'` — Nixpacks mounts a cache inside
+  `node_modules` and `npm ci` deletes `node_modules` out from under it.
+- Railway has no way to declare environment variables in config, unlike
+  Render's blueprint. Nothing prompts you, and the app exits at boot on the
+  first missing one, so the deploy fails a healthcheck with no obvious
+  cause. Set them before the first deploy, or right after it fails.
+
 1. New project → Deploy from GitHub repo (your fork).
-2. Settings → confirm **Build Command** `npm ci && npm run build` and
+2. Settings → confirm **Build Command** `npm run build` and
    **Start Command** `npm start` at the repo root — both scripts already
    know to reach into `apps/web`/`apps/api` themselves (see "The shape of
    it, once" above), so nothing needs a working-directory override.

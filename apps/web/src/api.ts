@@ -240,6 +240,10 @@ export interface HistoricalYear {
    *  exist (the winner is derived from those instead) or if no result is
    *  known at all. */
   winner: string | null;
+  /** The declared final score for such a year, if the group remembers one:
+   *  winnerPoints belongs to `winner`. Null when nobody has said. */
+  winnerPoints: number | null;
+  loserPoints: number | null;
 }
 
 export interface EventListItem {

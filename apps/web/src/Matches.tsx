@@ -6,6 +6,7 @@ import HistoricalTrip from "./HistoricalTrip.tsx";
 import TripPicker, { tripName } from "./TripPicker.tsx";
 import type { Trip } from "./TripPicker.tsx";
 import { formatWeekday } from "./lib/format.ts";
+import { declaredScore, sideLabelsFor } from "./lib/sides.ts";
 import "./Rules.css";
 import "./Matches.css";
 
@@ -14,7 +15,7 @@ const REFRESH_MS = 20_000;
 /** Both sides' total points for a historical year, from its own match
  *  records -- these years have no team rows to read a score off (see the
  *  API's schema.ts), so the result line adds up what was recorded. */
-function historicalResult(year: HistoricalYear): string | null {
+function historicalResult(year: HistoricalYear, teams: EventSummary["teams"]): string | null {
   const totals = new Map<string, number>();
   for (const r of year.rounds) {
     for (const m of r.matches) {
@@ -22,7 +23,8 @@ function historicalResult(year: HistoricalYear): string | null {
     }
   }
   const sides = [...totals.keys()].sort();
-  if (sides.length !== 2) return year.winner ? `${year.winner} won` : null;
+  // No match records: fall back to whatever the group remembers.
+  if (sides.length !== 2) return declaredScore(year, sideLabelsFor(teams));
   return `${sides[0]} ${totals.get(sides[0])?.toFixed(1)} – ${totals.get(sides[1])?.toFixed(1)} ${sides[1]}`;
 }
 
@@ -168,7 +170,7 @@ export default function Matches({ year }: { year?: number }) {
   const result = isCurrent
     ? null
     : activeHistorical
-      ? historicalResult(activeHistorical)
+      ? historicalResult(activeHistorical, currentEvent?.teams ?? [])
       : summary
         ? eventResult(summary)
         : null;

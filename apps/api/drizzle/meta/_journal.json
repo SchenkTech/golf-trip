@@ -78,6 +78,13 @@
       "when": 1789907113491,
       "tag": "0010_petite_night_thrasher",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790037555356,
+      "tag": "0011_aromatic_thunderbolt_ross",
+      "breakpoints": true
     }
   ]
 }

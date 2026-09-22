@@ -239,6 +239,19 @@ export const historicalYear = sqliteTable("historical_year", {
    *  (historicalMatch), the winner is derived from those instead and this
    *  goes back to null rather than risk disagreeing with the real detail. */
   winner: text("winner"),
+  /** The declared final score of a year with no match detail, as the group
+   *  remembers it -- winnerPoints to whichever side `winner` names. Same
+   *  class of fact as `winner` itself: told to us, not derived from
+   *  anything, and only read when there are no historicalMatch rows to
+   *  derive a real score from. Both null until someone says what it was.
+   *
+   *  This is the one place a points total is stored rather than computed,
+   *  and it is not an exception to docs/SCORING.md: there is no hole
+   *  score, no match record, nothing to compute it FROM. A remembered
+   *  score is better than a blank, as long as the app is clear about
+   *  which it is showing. */
+  winnerPoints: real("winner_points"),
+  loserPoints: real("loser_points"),
 });
 
 /** One of the three rounds in a historical year, just enough to label the

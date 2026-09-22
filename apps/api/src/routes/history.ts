@@ -114,6 +114,12 @@ history.get("/", async (c) => {
         // year's real matches are seeded, the winner comes from those and
         // this goes back to null (see schema.ts's note on the column).
         winner: y.winner,
+        // The declared final score, when the group remembers one and there
+        // are no matches to derive it from. Sent as the winner's and
+        // loser's totals rather than per side, because `winner` is what
+        // says which side is which.
+        winnerPoints: y.winnerPoints,
+        loserPoints: y.loserPoints,
       };
     }),
   );

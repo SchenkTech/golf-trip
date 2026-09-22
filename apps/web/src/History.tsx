@@ -3,7 +3,7 @@ import { api } from "./api.ts";
 import type { AllTimeStats, EventListItem, EventRound, EventSummary, HistoricalYear } from "./api.ts";
 import { Link } from "./router.tsx";
 import { formatDate } from "./lib/format.ts";
-import { sideKeyFor, sideLabelsFor } from "./lib/sides.ts";
+import { declaredScore, sideKeyFor, sideLabelsFor } from "./lib/sides.ts";
 import type { SideKey, SideLabels } from "./lib/sides.ts";
 import "./History.css";
 
@@ -34,7 +34,7 @@ function historicalTotals(year: HistoricalYear): Map<string, number> {
 /** One line per trip -- what a year's own card would show as its header
  *  score/status, reused so "All Time" and a single year's card can never
  *  say different things about the same year. */
-function yearSummary(m: MergedYear): { result: string | null; status: string } {
+function yearSummary(m: MergedYear, labels: SideLabels | null = null): { result: string | null; status: string } {
   if (m.kind === "event") {
     const { event, rounds } = m.data;
     const anyPlayed = rounds.some((r) => r.matches.some((match) => match.holesPlayed > 0));
@@ -48,7 +48,13 @@ function yearSummary(m: MergedYear): { result: string | null; status: string } {
 
   const hasMatches = m.data.rounds.some((r) => r.matches.length > 0);
   if (!hasMatches) {
-    if (m.data.winner) return { result: `${m.data.winner} won`, status: "Final score not yet recorded" };
+    const declared = declaredScore(m.data, labels);
+    if (declared) {
+      // A remembered score is a final score; only the match-by-match
+      // detail is missing, and the year's own card says so.
+      const known = m.data.winnerPoints !== null;
+      return { result: declared, status: known ? "Final" : "Final score not yet recorded" };
+    }
     return { result: null, status: "Round scores only" };
   }
   const totals = historicalTotals(m.data);
@@ -108,10 +114,19 @@ function cumulativePoints(years: MergedYear[], labels: SideLabels | null): Recor
     } else {
       if (!labels) continue;
       const hasMatches = m.data.rounds.some((r) => r.matches.length > 0);
-      if (!hasMatches) continue;
-      const t = historicalTotals(m.data);
-      totals.RED += t.get(labels.RED) ?? 0;
-      totals.BLUE += t.get(labels.BLUE) ?? 0;
+      if (hasMatches) {
+        const t = historicalTotals(m.data);
+        totals.RED += t.get(labels.RED) ?? 0;
+        totals.BLUE += t.get(labels.BLUE) ?? 0;
+        continue;
+      }
+      // No matches to add up, but the group may remember the final score.
+      // That's a real total someone recorded, so it counts -- what it
+      // can't do is say who won which match.
+      const key = sideKeyFor(m.data.winner, labels);
+      if (!key || m.data.winnerPoints === null || m.data.loserPoints === null) continue;
+      totals[key] += m.data.winnerPoints;
+      totals[key === "RED" ? "BLUE" : "RED"] += m.data.loserPoints;
     }
   }
   return totals;
@@ -172,7 +187,7 @@ function AllTimeHero({ years, teams }: { years: MergedYear[]; teams: EventSummar
  *  trip's matches -- the match-by-match detail lives on Matches behind its
  *  trip picker now (see Matches.tsx), so this is the list that sends you
  *  there rather than a second place telling the same story. */
-function AllTimeSummary({ years, currentYear }: { years: MergedYear[]; currentYear: number | null }) {
+function AllTimeSummary({ years, currentYear, labels }: { years: MergedYear[]; currentYear: number | null; labels: SideLabels | null }) {
   return (
     <div className="year-scores-wrap">
       <table className="year-scores-table">
@@ -185,7 +200,7 @@ function AllTimeSummary({ years, currentYear }: { years: MergedYear[]; currentYe
         </thead>
         <tbody>
           {years.map((m) => {
-            const { result, status } = yearSummary(m);
+            const { result, status } = yearSummary(m, labels);
             return (
               <tr key={m.year}>
                 <td>
@@ -416,7 +431,7 @@ export default function History() {
 
       <div className="years-list">
         <p className="year-scores-title">Every trip</p>
-        <AllTimeSummary years={merged} currentYear={currentYear} />
+        <AllTimeSummary years={merged} currentYear={currentYear} labels={sideLabelsFor(teams)} />
         {allTime && <AllTimePlayers stats={allTime} />}
         {futureYears.length > 0 && (
           <>

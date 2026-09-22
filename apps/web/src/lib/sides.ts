@@ -22,6 +22,24 @@ import type { EventSummary } from "../api.ts";
 
 export type SideKey = "RED" | "BLUE";
 
+/** The declared final score of a year with no match detail, written the way
+ *  a derived one is ("FOX 10 – 7 WOLF"), so the two read alike on screen.
+ *  Needs the losing side's name, which only the other team can supply.
+ *  Null when the group hasn't said what the score was. */
+export function declaredScore(
+  year: { winner: string | null; winnerPoints: number | null; loserPoints: number | null },
+  labels: SideLabels | null,
+): string | null {
+  const { winner, winnerPoints, loserPoints } = year;
+  if (!winner) return null;
+  if (winnerPoints === null || loserPoints === null) return `${winner} won`;
+  const key = sideKeyFor(winner, labels);
+  const loser = key && labels ? (key === "RED" ? labels.BLUE : labels.RED) : null;
+  return loser
+    ? `${winner} ${winnerPoints} – ${loserPoints} ${loser}`
+    : `${winner} won ${winnerPoints}–${loserPoints}`;
+}
+
 /** The side label a team would have been recorded under: its name without
  *  a leading "Team", upper-cased, since the old records are upper-case
  *  ("FOX", "WOLF") and a name is not. */

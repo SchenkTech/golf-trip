@@ -76,7 +76,7 @@ export default function Rules() {
             </thead>
             <tbody>
               <tr>
-                <td>Fourball</td>
+                <td>Best Ball</td>
                 <td>Better ball, two or three a side</td>
                 <td>Nassau, 2 pts (0.5 / 0.5 / 1)</td>
               </tr>
@@ -86,7 +86,7 @@ export default function Rules() {
                 <td>Nassau, 2 pts (0.5 / 0.5 / 1)</td>
               </tr>
               <tr>
-                <td>Singles</td>
+                <td>Match Play</td>
                 <td>One on one</td>
                 <td>Nassau, 3 pts (1 / 1 / 1)</td>
               </tr>

@@ -27,9 +27,11 @@ import { loadPlayerRecords } from "./records.ts";
  * than 0.
  */
 
+// The group's own words -- kept in step with apps/web's lib/formats.ts,
+// which is where the same map lives for the screens.
 const TEAM_FORMAT_LABEL: Record<string, string> = {
-  SINGLES: "Singles",
-  FOURBALL: "Fourball",
+  SINGLES: "Match Play",
+  FOURBALL: "Best Ball",
   FOURSOMES: "Foursomes",
   SCRAMBLE: "Scramble",
   ALT_SHOT: "Alternate Shot",

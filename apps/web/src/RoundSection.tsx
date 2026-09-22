@@ -1,21 +1,7 @@
 import type { EventRound } from "./api.ts";
 import MatchRow from "./MatchRow.tsx";
 import { formatWeekday, formatLongDate } from "./lib/format.ts";
-
-const TEAM_FORMAT_LABEL: Record<string, string> = {
-  SINGLES: "Singles",
-  FOURBALL: "Fourball",
-  FOURSOMES: "Foursomes",
-  SCRAMBLE: "Scramble",
-  ALT_SHOT: "Alternate Shot",
-};
-
-const SCORING_FORMAT_LABEL: Record<string, string> = {
-  MATCH_PLAY: "Match Play",
-  NASSAU: "Nassau",
-  HI_LO: "Hi-Lo",
-  STROKE: "Stroke Play",
-};
+import { roundFormatLine } from "./lib/formats.ts";
 
 /** One day's card: a big weekday headline (the same shape the Matches and
  *  Rules pages use) with date, course and format as a
@@ -31,8 +17,7 @@ export default function RoundSection({ round, readOnly }: { round: EventRound; r
         <p className="round-sub">
           {formatLongDate(round.date)}
           {round.teeTime ? ` · first tee ${round.teeTime}` : ""} · {round.courseName} ·{" "}
-          {TEAM_FORMAT_LABEL[round.teamFormat] ?? round.teamFormat} ·{" "}
-          {SCORING_FORMAT_LABEL[round.scoringFormat] ?? round.scoringFormat}
+          {roundFormatLine(round.teamFormat, round.scoringFormat)}
         </p>
       </header>
       <div className="round-matches">

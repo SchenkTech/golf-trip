@@ -5,15 +5,8 @@ import { api } from "./api.ts";
 import type { MatchDetail } from "./api.ts";
 import { getDeviceIdentity, setDeviceIdentity, getStoredJoinCode, setStoredJoinCode } from "./lib/identity.ts";
 import { enqueue, flushMatch, queueForMatch } from "./lib/offlineQueue.ts";
+import { teamFormatLabel } from "./lib/formats.ts";
 import "./MatchScreen.css";
-
-const TEAM_FORMAT_LABEL: Record<string, string> = {
-  SINGLES: "Singles",
-  FOURBALL: "Fourball",
-  FOURSOMES: "Foursomes",
-  SCRAMBLE: "Scramble",
-  ALT_SHOT: "Alternate Shot",
-};
 
 /** playerId + holeNumber -> gross, merging the server's last-known state
  *  with whatever this device still has queued locally. Queued always wins:
@@ -296,7 +289,7 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
       <button className="back-link" onClick={onBack}>← Board</button>
 
       <header className="match-header">
-        <p className="match-course">{match.courseName} · {TEAM_FORMAT_LABEL[match.teamFormat] ?? match.teamFormat}</p>
+        <p className="match-course">{match.courseName} · {teamFormatLabel(match.teamFormat)}</p>
         <div className="match-live-standing">{live.holesPlayed === 0 ? "Not started" : live.standing}</div>
         {match.scoringFormat === "NASSAU" && (
           <div className="segments-row">

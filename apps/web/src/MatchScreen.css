@@ -3,16 +3,23 @@
 .match-screen {
   max-width: 480px;
   margin: 0 auto;
-  padding: 16px 16px 56px;
+  /* Same status-bar inset as .board (App.css). This screen's first element
+   * is the back link, so without it the one way out of the scoring screen
+   * is underneath the clock -- which is exactly how it was reported. */
+  padding: calc(16px + env(safe-area-inset-top)) 16px 56px;
   color: var(--ink);
 }
 
+/* A 44px-tall target, per iOS's own minimum -- the negative margin keeps
+ * the text aligned with the content below it while the tappable area
+ * extends past it. */
 .back-link {
   background: none;
   border: none;
   color: var(--ink-dim);
   font-size: 14px;
-  padding: 8px 0;
+  padding: 12px;
+  margin: -12px 0 -12px -12px;
   cursor: pointer;
 }
 

@@ -1,3 +1,17 @@
+/** The trip's name without the bits that only identify one year of it:
+ *  a leading ordinal ("4th Annual") and a trailing year. Every event is
+ *  named for its own edition -- 4th Annual, 3rd Annual -- so the ordinal
+ *  is noise anywhere the year is already on screen, which is everywhere
+ *  it's used. */
+export function tripName(name: string): string {
+  return (
+    name
+      .replace(/^\s*\d+\s*(st|nd|rd|th)\s+annual\s+/i, "")
+      .replace(/\s*\b(19|20)\d{2}\b\s*$/, "")
+      .trim() || name
+  );
+}
+
 /** Parsed as UTC-noon rather than midnight so no local timezone can roll the
  *  displayed date back a day -- this is a date, not an instant. */
 export function formatDate(iso: string): string {

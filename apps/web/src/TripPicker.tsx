@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { navigate } from "./router.tsx";
+import { tripName } from "./lib/format.ts";
+
+export { tripName };
 
 /** One trip in the picker. `kind` is how much detail there is to show once
  *  it's picked -- a live event has real matches off real hole scores, a
@@ -12,12 +15,6 @@ export interface Trip {
    *  mistake. */
   name: string;
   kind: "event" | "historical";
-}
-
-/** Strips a trailing year off a trip name, so the picker can show the year
- *  once, in its own column. Anything else in the name is left alone. */
-export function tripName(name: string): string {
-  return name.replace(/\s*\b(19|20)\d{2}\b\s*$/, "").trim() || name;
 }
 
 function IconChevron() {

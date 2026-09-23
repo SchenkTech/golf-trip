@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api.ts";
 import type { AllTimeStats, EventListItem, EventRound, EventSummary, HistoricalYear } from "./api.ts";
 import { Link } from "./router.tsx";
-import { formatDate } from "./lib/format.ts";
+import { formatDate, tripName } from "./lib/format.ts";
 import { declaredScore, sideKeyFor, sideLabelsFor } from "./lib/sides.ts";
 import type { SideKey, SideLabels } from "./lib/sides.ts";
 import "./History.css";
@@ -444,7 +444,7 @@ export default function History() {
         {/* The trip's name is the headline; "History" is the label on it.
             Matches the shape the group's own build settled on. */}
         <p className="page-eyebrow">History</p>
-        <h1>{currentEvent?.name ?? "History"}</h1>
+        <h1>{currentEvent ? tripName(currentEvent.name) : "History"}</h1>
         <p className="page-sub">
           {playedTrips > 1
             ? `${playedTrips} trips played. Tap a year to see that trip's matches.`

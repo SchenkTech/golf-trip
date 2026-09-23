@@ -168,6 +168,15 @@ export async function loadAllTimeStats(db: AppDb): Promise<AllTimeStats> {
     db.query.historicalScore.findMany(),
   ]);
 
+  // A year the group tallied by hand, because nothing survives to derive
+  // from (schema.ts's historicalPlayerRecord). Added before the derived
+  // years below; the schema forbids a year having both.
+  const declared = await db.query.historicalPlayerRecord.findMany();
+  for (const r of declared) {
+    noteFormat(r.format);
+    addPoints(tallyFor(tallies, r.playerId), r.format, r.wins, r.losses);
+  }
+
   const sortedHRounds = [...hRounds].sort((a, b) => a.year - b.year || a.roundNumber - b.roundNumber);
   for (const round of sortedHRounds) {
     const label = round.format?.trim() || UNKNOWN_FORMAT;

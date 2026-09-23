@@ -297,6 +297,9 @@ export interface AllTimePlayer {
   record: { w: number; l: number; h: number };
   points: number;
   pointsByFormat: Record<string, number>;
+  /** Points the opposition took in those same matches. Won + lost is what
+   *  was on the table in the matches this player played. */
+  pointsLostByFormat: Record<string, number>;
   rounds: number;
   avgGross: number | null;
   avgNet: number | null;

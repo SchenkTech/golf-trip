@@ -100,3 +100,51 @@
   text-decoration: none;
   border-bottom: 1px solid color-mix(in srgb, var(--side-blue-ink) 40%, transparent);
 }
+
+/** The label above the page title -- the trip's name is the headline, so
+ *  "History" becomes the smaller thing that says which page you're on. */
+.page-eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--navy-ink-dim);
+}
+
+/** One format's all-time record, as its own card with a real heading --
+ *  best ball and match play are separate tables, the way the group's own
+ *  records are kept. */
+.format-record {
+  margin-top: 16px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.format-record h3 {
+  margin: 0 0 4px;
+  font-family: var(--display-font);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* Numbers right-align so the columns read down; the name stays left. */
+.format-record th:not(:first-child),
+.format-record td:not(:first-child) {
+  text-align: right;
+}
+
+/* The generic table paints its last column as an accent; here every
+   number is equally a number, and the win % is the emphasis. */
+.format-record td:last-child {
+  color: var(--ink);
+  font-weight: 700;
+}

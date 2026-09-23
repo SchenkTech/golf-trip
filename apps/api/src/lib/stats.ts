@@ -54,6 +54,9 @@ export interface AllTimePlayer {
   /** The same points split by what was being played, keyed by the labels in
    *  `formats` below. A format they've never played is simply absent. */
   pointsByFormat: Record<string, number>;
+  /** Points the opposition took in those same matches, so a format's row
+   *  can read as a record (won-lost) and a win percentage. */
+  pointsLostByFormat: Record<string, number>;
   /** Rounds with a complete personal card behind them (see
    *  PERSONAL_CARD_FORMATS) -- what the two averages are averages of. */
   rounds: number;
@@ -71,6 +74,10 @@ export interface AllTimeStats {
 interface Tally {
   points: number;
   byFormat: Map<string, number>;
+  /** Points the other side took in the same matches. Won + lost is every
+   *  point that was on the table in the matches this player actually
+   *  played, which is what makes a win percentage mean anything. */
+  lostByFormat: Map<string, number>;
   grossTotal: number;
   netTotal: number;
   rounds: number;
@@ -79,14 +86,15 @@ interface Tally {
 function tallyFor(map: Map<string, Tally>, playerId: string): Tally {
   const existing = map.get(playerId);
   if (existing) return existing;
-  const fresh: Tally = { points: 0, byFormat: new Map(), grossTotal: 0, netTotal: 0, rounds: 0 };
+  const fresh: Tally = { points: 0, byFormat: new Map(), lostByFormat: new Map(), grossTotal: 0, netTotal: 0, rounds: 0 };
   map.set(playerId, fresh);
   return fresh;
 }
 
-function addPoints(t: Tally, format: string, points: number) {
-  t.points += points;
-  t.byFormat.set(format, (t.byFormat.get(format) ?? 0) + points);
+function addPoints(t: Tally, format: string, won: number, lost: number) {
+  t.points += won;
+  t.byFormat.set(format, (t.byFormat.get(format) ?? 0) + won);
+  t.lostByFormat.set(format, (t.lostByFormat.get(format) ?? 0) + lost);
 }
 
 export async function loadAllTimeStats(db: AppDb): Promise<AllTimeStats> {
@@ -121,7 +129,8 @@ export async function loadAllTimeStats(db: AppDb): Promise<AllTimeStats> {
       for (const p of scored.players) {
         const t = tallyFor(tallies, p.playerId);
         const won = p.side === "RED" ? scored.points.red : scored.points.blue;
-        if (scored.holesPlayed > 0) addPoints(t, label, won);
+        const lost = p.side === "RED" ? scored.points.blue : scored.points.red;
+        if (scored.holesPlayed > 0) addPoints(t, label, won, lost);
       }
 
       // Only a format where the player has their own ball (see
@@ -175,7 +184,9 @@ export async function loadAllTimeStats(db: AppDb): Promise<AllTimeStats> {
           segmentValue(hm.front9Winner, p.side, w[0]) +
           segmentValue(hm.back9Winner, p.side, w[1]) +
           segmentValue(hm.overallWinner, p.side, w[2]);
-        addPoints(tallyFor(tallies, p.playerId), label, points);
+        // Two sides, so whatever wasn't won was lost -- including the half
+        // of a tied bet that went the other way.
+        addPoints(tallyFor(tallies, p.playerId), label, points, w[0] + w[1] + w[2] - points);
       }
     }
   }
@@ -201,6 +212,7 @@ export async function loadAllTimeStats(db: AppDb): Promise<AllTimeStats> {
       record: records.get(playerId) ?? zero,
       points: t.points,
       pointsByFormat: Object.fromEntries(t.byFormat),
+      pointsLostByFormat: Object.fromEntries(t.lostByFormat),
       rounds: t.rounds,
       avgGross: t.rounds > 0 ? t.grossTotal / t.rounds : null,
       avgNet: t.rounds > 0 ? t.netTotal / t.rounds : null,

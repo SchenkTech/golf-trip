@@ -1,7 +1,7 @@
 import type { ScoringFormat, TeamFormat } from "@gc/scoring";
 import type { AppDb } from "../db/client.ts";
 import { scoreMatchRows, strokeIndexesFor, segmentPointsFor, PERSONAL_CARD_FORMATS } from "./score.ts";
-import { segmentValue } from "./segments.ts";
+import { segmentValue, segmentWeightsFor } from "./segments.ts";
 import { loadPlayerLabels } from "./players.ts";
 import { loadPlayerRecords } from "./records.ts";
 
@@ -162,7 +162,7 @@ export async function loadAllTimeStats(db: AppDb): Promise<AllTimeStats> {
   const sortedHRounds = [...hRounds].sort((a, b) => a.year - b.year || a.roundNumber - b.roundNumber);
   for (const round of sortedHRounds) {
     const label = round.format?.trim() || UNKNOWN_FORMAT;
-    const scale = (round.pointsPerMatch ?? 3) / 3;
+    const w = segmentWeightsFor(round);
     const matches = hMatches.filter((m) => m.year === round.year && m.roundNumber === round.roundNumber);
     for (const hm of matches) {
       const roster = hMatchPlayers.filter(
@@ -172,9 +172,9 @@ export async function loadAllTimeStats(db: AppDb): Promise<AllTimeStats> {
       noteFormat(label);
       for (const p of roster) {
         const points =
-          segmentValue(hm.front9Winner, p.side, scale) +
-          segmentValue(hm.back9Winner, p.side, scale) +
-          segmentValue(hm.overallWinner, p.side, scale);
+          segmentValue(hm.front9Winner, p.side, w[0]) +
+          segmentValue(hm.back9Winner, p.side, w[1]) +
+          segmentValue(hm.overallWinner, p.side, w[2]);
         addPoints(tallyFor(tallies, p.playerId), label, points);
       }
     }

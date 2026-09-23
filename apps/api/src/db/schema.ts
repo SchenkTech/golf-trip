@@ -271,6 +271,15 @@ export const historicalRound = sqliteTable(
     roundNumber: integer("round_number").notNull(), // 1-3, tournament order
     courseName: text("course_name").notNull(),
     pointsPerMatch: real("points_per_match"),
+    /** How pointsPerMatch splits across front/back/overall, as a JSON
+     *  array -- the same idea and format as round.segmentPoints for a live
+     *  round. The group plays the overall eighteen for twice what either
+     *  nine is worth ("[0.5,0.5,1]", two points a match), which an even
+     *  scale of pointsPerMatch cannot express: it produces three bets of
+     *  0.67 instead, and a year's scores come out wrong in a way nothing
+     *  flags. Null means the even split, which is what every historical
+     *  round assumed before this existed. */
+    segmentPoints: text("segment_points"),
     /** What was played that day, as a display label ("Best Ball",
      *  "Scramble") rather than the live schema's teamFormat enum -- these
      *  years ran formats nobody modeled at the time, and a label is the

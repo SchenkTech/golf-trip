@@ -1,0 +1,1 @@
+ALTER TABLE `historical_round` ADD `segment_points` text;

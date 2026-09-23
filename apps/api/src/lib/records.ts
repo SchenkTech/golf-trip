@@ -3,7 +3,7 @@ import type { ScoringFormat, TeamFormat } from "@gc/scoring";
 import type { AppDb } from "../db/client.ts";
 import * as schema from "../db/schema.ts";
 import { scoreMatchRows, strokeIndexesFor, segmentPointsFor } from "./score.ts";
-import { segmentValue } from "./segments.ts";
+import { segmentValue, segmentWeightsFor } from "./segments.ts";
 
 export interface PlayerRecord {
   w: number;
@@ -75,11 +75,11 @@ export async function loadPlayerRecords(
       const sides = [...new Set(roster.map((p) => p.side))];
       if (sides.length !== 2) continue; // can't call a winner without two named sides
       const round = hRounds.find((r) => r.year === hm.year && r.roundNumber === hm.roundNumber);
-      const scale = (round?.pointsPerMatch ?? 3) / 3;
+      const w = segmentWeightsFor(round ?? {});
       const total = (side: string) =>
-        segmentValue(hm.front9Winner, side, scale) +
-        segmentValue(hm.back9Winner, side, scale) +
-        segmentValue(hm.overallWinner, side, scale);
+        segmentValue(hm.front9Winner, side, w[0]) +
+        segmentValue(hm.back9Winner, side, w[1]) +
+        segmentValue(hm.overallWinner, side, w[2]);
       const [a, b] = sides;
       const pa = total(a);
       const pb = total(b);

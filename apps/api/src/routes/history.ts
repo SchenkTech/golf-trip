@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { loadPlayerLabels } from "../lib/players.ts";
 import { loadAllTimeStats } from "../lib/stats.ts";
-import { segmentValue } from "../lib/segments.ts";
+import { segmentValue, segmentWeightsFor } from "../lib/segments.ts";
 import * as schema from "../db/schema.ts";
 import type { AppEnv } from "../types.ts";
 
@@ -72,7 +72,7 @@ history.get("/", async (c) => {
       });
 
       const roundsOut = rounds.map((r) => {
-        const scale = (r.pointsPerMatch ?? 3) / 3;
+        const w = segmentWeightsFor(r);
         const matches = matchRows
           .filter((m) => m.roundNumber === r.roundNumber)
           .sort((a, b) => a.matchNumber - b.matchNumber)
@@ -83,13 +83,13 @@ history.get("/", async (c) => {
             const sides = [...new Set(roster.map((mp) => mp.side))];
             const [sideA, sideB] = sides;
             const pointsA =
-              segmentValue(m.front9Winner, sideA, scale) +
-              segmentValue(m.back9Winner, sideA, scale) +
-              segmentValue(m.overallWinner, sideA, scale);
+              segmentValue(m.front9Winner, sideA, w[0]) +
+              segmentValue(m.back9Winner, sideA, w[1]) +
+              segmentValue(m.overallWinner, sideA, w[2]);
             const pointsB =
-              segmentValue(m.front9Winner, sideB, scale) +
-              segmentValue(m.back9Winner, sideB, scale) +
-              segmentValue(m.overallWinner, sideB, scale);
+              segmentValue(m.front9Winner, sideB, w[0]) +
+              segmentValue(m.back9Winner, sideB, w[1]) +
+              segmentValue(m.overallWinner, sideB, w[2]);
             return {
               matchNumber: m.matchNumber,
               sides: sides.map((side) => ({

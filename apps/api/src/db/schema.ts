@@ -352,6 +352,35 @@ export const historicalScore = sqliteTable(
   (t) => ({ pk: primaryKey({ columns: [t.year, t.roundNumber, t.playerId] }) }),
 );
 
+/**
+ * A per-player record for a year that has no match records to derive one
+ * from -- the group's own tally, as kept in their spreadsheet.
+ *
+ * 2025 is the case this exists for: round scores survive, but nothing says
+ * who played whom, so there is no way to compute what anyone won. Same
+ * standing as historicalYear.winner and winnerPoints -- a declared fact,
+ * used only where nothing real can be derived. A year with
+ * historicalMatch rows must NOT have rows here; two sources for one number
+ * is how a scoreboard starts disagreeing with itself.
+ *
+ * wins/losses are POINTS, not matches: a Nassau match is three bets, so
+ * both are fractional. See lib/segments.ts.
+ */
+export const historicalPlayerRecord = sqliteTable(
+  "historical_player_record",
+  {
+    year: integer("year").notNull().references(() => historicalYear.year),
+    playerId: text("player_id").notNull().references(() => player.id),
+    /** The display label for the format, matching what a live round of the
+     *  same shape is called on screen -- "Best Ball", "Match Play" -- so
+     *  the all-time tables merge rather than doubling up. */
+    format: text("format").notNull(),
+    wins: real("wins").notNull(),
+    losses: real("losses").notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.year, t.playerId, t.format] }) }),
+);
+
 // -------------------------------------------------------------- awards
 
 /**
@@ -471,6 +500,11 @@ export const historicalYearRelations = relations(historicalYear, ({ many }) => (
 
 export const historicalRoundRelations = relations(historicalRound, ({ one }) => ({
   year: one(historicalYear, { fields: [historicalRound.year], references: [historicalYear.year] }),
+}));
+
+export const historicalPlayerRecordRelations = relations(historicalPlayerRecord, ({ one }) => ({
+  year: one(historicalYear, { fields: [historicalPlayerRecord.year], references: [historicalYear.year] }),
+  player: one(player, { fields: [historicalPlayerRecord.playerId], references: [player.id] }),
 }));
 
 export const historicalScoreRelations = relations(historicalScore, ({ one }) => ({

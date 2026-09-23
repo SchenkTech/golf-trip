@@ -14,9 +14,14 @@ body {
 .board {
   max-width: 640px;
   margin: 0 auto;
-  /* Clears the fixed bottom nav (Nav.css) on every screen that renders it --
-   * MatchScreen has no bottom nav but keeps its own bottom padding instead. */
-  padding: 20px 16px calc(76px + env(safe-area-inset-bottom));
+  /* Top: clears the iPhone status bar. index.html asks for
+   * viewport-fit=cover with a translucent status bar, so an installed PWA
+   * draws under it -- without this inset the first thing on the page sits
+   * behind the clock and cannot be tapped.
+   * Bottom: clears the fixed bottom nav (Nav.css) on every screen that
+   * renders it -- MatchScreen has no bottom nav but keeps its own bottom
+   * padding instead. */
+  padding: calc(20px + env(safe-area-inset-top)) 16px calc(76px + env(safe-area-inset-bottom));
 }
 
 .loading,

@@ -175,9 +175,9 @@ INSERT INTO quick_rule (id, title, body, sort_order) VALUES
 -- so 'Team Fox' picks up FOX's results. Rename a team and that year drops
 -- out of the all-time tally rather than being credited to the wrong side.
 INSERT INTO historical_year (year, name, winner) VALUES (2026, '1st Annual Cup', NULL);
-INSERT INTO historical_round (year, round_number, course_name, points_per_match, format) VALUES (2026, 1, 'Lakeside G&CC', 3, 'Fourball');
+INSERT INTO historical_round (year, round_number, course_name, points_per_match, format) VALUES (2026, 1, 'Lakeside G&CC', 3, 'Best Ball');
 INSERT INTO historical_round (year, round_number, course_name, points_per_match, format) VALUES (2026, 2, 'Riverbend Links', 3, 'Foursomes');
-INSERT INTO historical_round (year, round_number, course_name, points_per_match, format) VALUES (2026, 3, 'Lakeside G&CC', 3, 'Singles');
+INSERT INTO historical_round (year, round_number, course_name, points_per_match, format) VALUES (2026, 3, 'Lakeside G&CC', 3, 'Match Play');
 
 INSERT INTO historical_match (year, round_number, match_number, front9_winner, back9_winner, overall_winner) VALUES (2026, 1, 1, 'FOX', 'WOLF', 'FOX');
 INSERT INTO historical_match_player (year, round_number, match_number, player_id, side) VALUES (2026, 1, 1, 'p-fox', 'FOX');

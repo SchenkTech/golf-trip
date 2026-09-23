@@ -15,7 +15,13 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    /* Named explicitly, as apps/api does: TypeScript 7 no longer pulls in
+       every @types package it can find, so the Node built-ins that
+       src/lib/*.test.ts imports have to be asked for. vite/client and
+       vite-plugin-pwa/client come from the /// references in
+       src/vite-env.d.ts. */
+    "types": ["node"]
   },
   "include": ["src"]
 }

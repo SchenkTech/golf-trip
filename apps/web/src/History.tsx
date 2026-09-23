@@ -219,11 +219,6 @@ function AllTimeSummary({ years, currentYear, labels }: { years: MergedYear[]; c
   );
 }
 
-/** W-L-H, the same shape the Teams screen shows beside a name. */
-function recordLabel(r: { w: number; l: number; h: number }): string {
-  return `${r.w}–${r.l}–${r.h}`;
-}
-
 /** Everyone's all-time line, in two tables rather than one very wide one:
  *  what you've won (record, points, and which formats they came at), then
  *  what you've shot (gross and net averages). They answer different
@@ -233,6 +228,58 @@ function recordLabel(r: { w: number; l: number; h: number }): string {
  *  (see the API's lib/stats.ts): a year contributes whatever it actually
  *  has, and a player with nothing on record for a column reads "—" rather
  *  than 0. */
+/** One format's all-time record: what each player won and lost, and the
+ *  share of what was on the table that they took. Shaped after the trip's
+ *  own records sheet, which keeps a table per format rather than one wide
+ *  one -- and for the same reason, that best ball and match play are
+ *  different games and a combined row flatters whoever plays more of the
+ *  one they're good at.
+ *
+ *  Won and lost are POINTS, not matches: a Nassau match is three separate
+ *  bets, so a player can lose a match and still take a point off it. */
+function FormatRecord({ format, players }: { format: string; players: AllTimeStats["players"] }) {
+  const rows = players
+    .map((p) => {
+      const won = p.pointsByFormat[format] ?? 0;
+      const lost = p.pointsLostByFormat[format] ?? 0;
+      return { name: p.playerId, label: p.name, won, lost, played: won + lost };
+    })
+    // Somebody who has never played this format has no record in it --
+    // showing them as 0-0 would put them level with a player who has.
+    .filter((r) => r.played > 0)
+    .sort((a, b) => b.won / b.played - a.won / a.played || b.won - a.won);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section className="format-record">
+      <h3>{format}</h3>
+      <div className="year-scores-wrap">
+        <table className="year-scores-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Win</th>
+              <th>Lose</th>
+              <th>Win %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.name}>
+                <td>{r.label}</td>
+                <td>{Number(r.won.toFixed(2))}</td>
+                <td>{Number(r.lost.toFixed(2))}</td>
+                <td>{((r.won / r.played) * 100).toFixed(1)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function AllTimePlayers({ stats }: { stats: AllTimeStats }) {
   if (stats.players.length === 0) {
     return <p className="year-status">No all-time numbers yet — they start with the first hole entered.</p>;
@@ -246,34 +293,9 @@ function AllTimePlayers({ stats }: { stats: AllTimeStats }) {
 
   return (
     <>
-      <p className="year-scores-title">All-time record &amp; points</p>
-      <div className="year-scores-wrap">
-        <table className="year-scores-table">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>W–L–H</th>
-              {stats.formats.map((f) => (
-                <th key={f}>{f}</th>
-              ))}
-              <th>Points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.players.map((p) => (
-              <tr key={p.playerId}>
-                <td>{p.name}</td>
-                <td>{recordLabel(p.record)}</td>
-                {stats.formats.map((f) => {
-                  const pts = p.pointsByFormat[f];
-                  return <td key={f}>{pts === undefined ? "—" : Number(pts.toFixed(1))}</td>;
-                })}
-                <td>{Number(p.points.toFixed(1))}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {stats.formats.map((format) => (
+        <FormatRecord key={format} format={format} players={stats.players} />
+      ))}
 
       <p className="year-scores-title">All-time scoring averages</p>
       <div className="year-scores-wrap">
@@ -299,8 +321,9 @@ function AllTimePlayers({ stats }: { stats: AllTimeStats }) {
         </table>
       </div>
       <p className="all-time-note">
-        Averages count rounds with a full eighteen on record for that player — scrambles and alternate shot have one
-        ball per side, so there is no personal card to average.
+        Won and lost are points, not matches — a Nassau match is three bets (front nine, back nine, overall), so a
+        match can be lost and still be worth something. Averages count rounds with a full eighteen on record for that
+        player; scrambles and alternate shot have one ball per side, so there is no personal card to average.
       </p>
     </>
   );
@@ -343,7 +366,7 @@ export default function History() {
   const [years, setYears] = useState<YearDetail[]>([]);
   const [historical, setHistorical] = useState<HistoricalYear[]>([]);
   const [allTime, setAllTime] = useState<AllTimeStats | null>(null);
-  const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [currentEvent, setCurrentEvent] = useState<EventSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -376,8 +399,8 @@ export default function History() {
     // current one shouldn't look like an archive link.
     api
       .currentEvent()
-      .then((ev) => setCurrentYear(ev.year))
-      .catch(() => setCurrentYear(null));
+      .then(setCurrentEvent)
+      .catch(() => setCurrentEvent(null));
   }, []);
 
   if (error) {
@@ -404,6 +427,7 @@ export default function History() {
   // A historical year is always "played" (it's real recorded rounds by
   // definition), but an event year (2027 onward) might be entirely
   // upcoming -- "Not yet played" is the one status that means that.
+  const currentYear = currentEvent?.year ?? null;
   const playedTrips = merged.filter((m) => yearSummary(m).status !== "Not yet played").length;
 
   // Only event-kind years can be unplayed (see above), so this is always a
@@ -417,7 +441,10 @@ export default function History() {
   return (
     <main className="board">
       <header className="page-header">
-        <h1>History</h1>
+        {/* The trip's name is the headline; "History" is the label on it.
+            Matches the shape the group's own build settled on. */}
+        <p className="page-eyebrow">History</p>
+        <h1>{currentEvent?.name ?? "History"}</h1>
         <p className="page-sub">
           {playedTrips > 1
             ? `${playedTrips} trips played. Tap a year to see that trip's matches.`

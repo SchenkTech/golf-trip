@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api.ts";
 import type { AllTimeStats, EventListItem, EventRound, EventSummary, HistoricalYear } from "./api.ts";
 import { Link } from "./router.tsx";
-import { formatDate, tripName } from "./lib/format.ts";
+import { formatDate, formatPoints, tripName } from "./lib/format.ts";
 import { declaredScore, sideKeyFor, sideLabelsFor } from "./lib/sides.ts";
 import type { SideKey, SideLabels } from "./lib/sides.ts";
 import "./History.css";
@@ -61,7 +61,7 @@ function yearSummary(m: MergedYear, labels: SideLabels | null = null): { result:
   const sideNames = [...totals.keys()].sort();
   const result =
     sideNames.length === 2
-      ? `${sideNames[0]} ${totals.get(sideNames[0])?.toFixed(1)} – ${totals.get(sideNames[1])?.toFixed(1)} ${sideNames[1]}`
+      ? `${sideNames[0]} ${formatPoints(totals.get(sideNames[0]) ?? 0)} – ${formatPoints(totals.get(sideNames[1]) ?? 0)} ${sideNames[1]}`
       : null;
   return { result, status: "Final" };
 }
@@ -176,7 +176,7 @@ function AllTimeHero({ years, teams }: { years: MergedYear[]; teams: EventSummar
         </div>
       </section>
       <p className="points-available">
-        {decidedCount} decided trip{decidedCount === 1 ? "" : "s"} · {points.RED.toFixed(1)}–{points.BLUE.toFixed(1)}{" "}
+        {decidedCount} decided trip{decidedCount === 1 ? "" : "s"} · {formatPoints(points.RED)}–{formatPoints(points.BLUE)}{" "}
         points all-time
       </p>
     </div>

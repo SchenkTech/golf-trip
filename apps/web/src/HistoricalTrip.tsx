@@ -1,5 +1,6 @@
 import type { EventSummary, HistoricalMatch, HistoricalYear } from "./api.ts";
 import { sideKeyFor, sideLabelsFor } from "./lib/sides.ts";
+import { formatPoints } from "./lib/format.ts";
 import type { SideLabels } from "./lib/sides.ts";
 import "./History.css";
 
@@ -34,7 +35,7 @@ function HistoricalMatchCard({ match, labels }: { match: HistoricalMatch; labels
   return (
     <div className={`match-card ${leadClass}`}>
       <div className="match-standing-badge">
-        {a.points % 1 === 0 ? a.points : a.points.toFixed(1)}–{b.points % 1 === 0 ? b.points : b.points.toFixed(1)}
+        {formatPoints(a.points)}–{formatPoints(b.points)}
       </div>
       <div className="match-card-sides">
         <span className={`match-card-side ${sideClass(a.side, labels)}`}>{a.players.join(" & ")}</span>

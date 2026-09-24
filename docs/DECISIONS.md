@@ -77,7 +77,7 @@ a tee: seven columns on a phone forces horizontal scrolling and small targets.
 Rather than pick, ship both against the same data. `Enter` is one hole filling
 the screen; `Card` is the grid. A toggle, not a setting.
 
-## 9. Scorecard import is a photo reader, not an integration
+## 9. Scorecard import is a photo reader, run entirely on the device
 
 Checked whether the group's other scoring app exposes anything to connect
 to: no public API, no CSV or PDF export, no structured share format --
@@ -86,21 +86,32 @@ research, is in docs/TRIP.md -- the finding generalizes to any such app,
 so the reasoning stays here and the name doesn't). The only thing that
 ever leaves it is a picture a human looks at, which is also literally how
 its own "photo scorecard" feature gets a paper card in the other
-direction.
+direction. So a photo was always the whole integration surface, generic to
+any scoring app's screenshot or a paper card -- never tied to one product.
 
-So a photo is the whole integration surface, and it doesn't need to be
-Grint-specific -- a screenshot of their app and a photo of a paper card are
-the same input. `POST /:id/scorecard-ocr` sends the photo to a vision model
-with the match's real roster and holes, gets back proposed readings, and
-stops there: nothing is written until a person reviews the readings on
-screen and taps Apply, at which point it is the exact same batch write a
+The first version sent that photo to a hosted vision model (a hono route,
+an `ANTHROPIC_API_KEY` secret) and asked it to read the whole grid
+semantically -- which player, which hole, in one call. Reversed after it
+shipped: that was this app's first metered, pay-per-use, account-requiring
+dependency, in a codebase where every other integration (Google OAuth,
+Turso/D1, Cloudflare Workers) is free at this scale by design (see
+docs/HOSTING.md). A feature only a dozen friends use a few times a year
+doesn't need an ongoing bill to exist.
+
+So the reading runs entirely on the device instead (Tesseract, an
+open-source OCR engine bundled into the PWA itself -- see
+lib/tesseractRecognize.ts). No account, no cost, no photo ever leaves the
+phone. The real cost: local OCR reads characters, not a scorecard -- it
+has no idea a photo is a grid of players and holes, only text and where it
+sits on the page. Turning that into "hole 4, this player, this score"
+needs a person to say how many columns and rows the photo actually shows
+(lib/scorecardOcr.ts's layout step, a known-count clustering of the raw
+positions -- deliberately not an attempt to *guess* the grid shape, which
+is a much harder problem than asking two numbers). What comes back is
+still only ever a *proposal*: nothing is written until a person reviews
+the grid and taps Apply, at which point it is the exact same batch write a
 manual tap makes (`POST /:id/scores`) -- same offline queue, same
-last-write-wins, same attribution. A misread number is a wrong *proposal*,
-never a silent write.
-
-`ANTHROPIC_API_KEY` is optional. A deployment that never sets it just has
-that one button return "not configured" -- nothing else depends on it,
-matching how every other config-gated feature here degrades.
+last-write-wins, same attribution.
 
 ---
 

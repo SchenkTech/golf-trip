@@ -90,14 +90,65 @@
   color: var(--side-red-ink);
 }
 
-.ocr-note {
-  margin: 0 0 12px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ink-dim);
-  padding: 8px 10px;
+/* The reading-in-progress bar -- local OCR has no server round trip to
+ * show a spinner for; this is real percent-through-the-image progress,
+ * from Tesseract's own logger callback. */
+.ocr-progress-track {
+  height: 10px;
+  border-radius: 999px;
   background: var(--surface-2);
+  overflow: hidden;
+  margin: 4px 0;
+}
+
+.ocr-progress-fill {
+  height: 100%;
+  background: var(--side-blue);
+  transition: width 0.2s ease;
+}
+
+/* The photo itself, shown back during calibration (so "how many columns"
+ * is answered by looking at the thing, not memory) and, smaller, on the
+ * review grid for reference while fixing a cell. */
+.ocr-preview {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--surface-2);
+  margin-bottom: 10px;
+}
+
+.ocr-preview-small {
+  max-height: 160px;
+  margin: 10px 0 0;
+}
+
+.ocr-calibrate-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.ocr-calibrate-field:first-of-type {
+  border-top: none;
+}
+
+.ocr-calibrate-field input {
+  width: 64px;
+  padding: 8px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--rule);
   border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .ocr-grid-wrap {
@@ -125,11 +176,6 @@
   text-transform: uppercase;
 }
 
-.ocr-hole-col {
-  color: var(--ink) !important;
-  font-weight: 700;
-}
-
 .ocr-player-select {
   font-size: 11px;
   padding: 3px 4px;
@@ -149,6 +195,17 @@
   border-radius: 6px;
   background: var(--surface-2);
   color: var(--ink);
+}
+
+/* The per-row hole number -- narrower, and bordered in the same accent
+ * as a "this needs your attention" field rather than the plain score
+ * cells beside it, since guessing wrong here (not just misreading a
+ * number) silently mislabels a whole row. */
+.ocr-hole-input {
+  width: 34px;
+  border-color: var(--side-red);
+  font-weight: 700;
+  color: var(--ink) !important;
 }
 
 .ocr-actions {

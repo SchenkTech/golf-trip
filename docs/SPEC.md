@@ -68,10 +68,12 @@ as such.
 
 **Built:** a third way onto this screen, beside Enter and Card -- "Import
 photo." A screenshot from another scoring app, or a photo of a paper card,
-read into an editable grid (every hole, every player, pre-filled) that a
-person corrects before anything is saved. See docs/DECISIONS.md #9 for why
-this is a photo reader rather than an integration with anything -- there was
-nothing to integrate with.
+read entirely on the device (no account, no cost, the photo never leaves the
+phone) into an editable grid that a person confirms before anything is
+saved. Since the reader has no idea a photo is a scorecard -- only text and
+where it sits -- a person first says how many columns and rows it shows,
+same order of effort as picking a name off a list. See docs/DECISIONS.md #9
+for the full reasoning, including the hosted version this replaced.
 
 ## The field, and other things only a specific trip can answer
 

@@ -103,26 +103,6 @@ export interface ExistingScore {
   enteredAt: number;
 }
 
-/** One proposed hole score from a scorecard photo -- not yet written
- *  anywhere. playerId is null when the name on the card didn't match
- *  anyone in this match closely enough to guess; the review screen is
- *  where a person resolves that, same as they'd correct a misread
- *  number. */
-export interface OcrReading {
-  playerName: string;
-  playerId: string | null;
-  holeNumber: number;
-  gross: number | null;
-}
-
-export interface ScorecardOcrResult {
-  readings: OcrReading[];
-  /** The reader's own one-line note on anything it wasn't sure about, or
-   *  null. Shown as-is; never acted on. */
-  note: string | null;
-  roster: { playerId: string; name: string }[];
-}
-
 export interface MatchDetail extends ScoredMatch {
   roundId: string;
   eventId: string;
@@ -375,11 +355,6 @@ export const api = {
   events: () => get<{ events: EventListItem[] }>("/api/events"),
   rounds: (eventId: string) => get<{ rounds: EventRound[] }>(`/api/events/${eventId}/rounds`),
   match: (matchId: string) => get<MatchDetail>(`/api/matches/${matchId}`),
-  /** `image` is a data URL -- the one encoding a File/Blob, a Cloudflare
-   *  Worker's fetch and a Node fetch all agree on without a multipart
-   *  dependency. See routes/matches.ts's POST /:id/scorecard-ocr. */
-  scorecardOcr: (matchId: string, image: string, code?: string) =>
-    post<ScorecardOcrResult>(`/api/matches/${matchId}/scorecard-ocr`, { image, code }),
   teams: (eventId: string) => get<{ teams: TeamRoster[] }>(`/api/events/${eventId}/teams`),
   verifyCode: (eventId: string, code: string) =>
     post<{ ok: boolean }>(`/api/events/${eventId}/verify-code`, { code }),

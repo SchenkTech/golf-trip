@@ -7,6 +7,7 @@ import TripPicker, { tripName } from "./TripPicker.tsx";
 import type { Trip } from "./TripPicker.tsx";
 import { formatWeekday } from "./lib/format.ts";
 import { declaredScore, sideLabelsFor } from "./lib/sides.ts";
+import { formatPoints } from "./lib/format.ts";
 import "./Rules.css";
 import "./Matches.css";
 
@@ -25,7 +26,7 @@ function historicalResult(year: HistoricalYear, teams: EventSummary["teams"]): s
   const sides = [...totals.keys()].sort();
   // No match records: fall back to whatever the group remembers.
   if (sides.length !== 2) return declaredScore(year, sideLabelsFor(teams));
-  return `${sides[0]} ${totals.get(sides[0])?.toFixed(1)} – ${totals.get(sides[1])?.toFixed(1)} ${sides[1]}`;
+  return `${sides[0]} ${formatPoints(totals.get(sides[0]) ?? 0)} – ${formatPoints(totals.get(sides[1]) ?? 0)} ${sides[1]}`;
 }
 
 function eventResult(summary: EventSummary): string | null {

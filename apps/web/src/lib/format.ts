@@ -1,3 +1,12 @@
+/** Points, written as they actually are. A halved half-point bet is worth
+ *  a quarter, and rounding that to one decimal printed "1.8 - 0.3" for a
+ *  match that was 1.75 - 0.25 -- a scoreboard that rounds is a scoreboard
+ *  nobody can check against their own card. Trailing zeros are dropped, so
+ *  2 stays "2" and 1.5 stays "1.5". */
+export function formatPoints(n: number): string {
+  return String(Number(n.toFixed(2)));
+}
+
 /** The trip's name without the bits that only identify one year of it:
  *  a leading ordinal ("4th Annual") and a trailing year. Every event is
  *  named for its own edition -- 4th Annual, 3rd Annual -- so the ordinal

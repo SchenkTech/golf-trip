@@ -66,6 +66,13 @@ a disagreement becomes a conversation on the tee rather than a number that
 silently changed. Entries that arrive from a queued offline device are marked
 as such.
 
+**Built:** a third way onto this screen, beside Enter and Card -- "Import
+photo." A screenshot from another scoring app, or a photo of a paper card,
+read into an editable grid (every hole, every player, pre-filled) that a
+person corrects before anything is saved. See docs/DECISIONS.md #9 for why
+this is a photo reader rather than an integration with anything -- there was
+nothing to integrate with.
+
 ## The field, and other things only a specific trip can answer
 
 How many players, whether that divides into pairs, which tee combination is

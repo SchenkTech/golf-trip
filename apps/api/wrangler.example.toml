@@ -2,9 +2,10 @@
 # the real, private config for one deployment (see docs/PUBLISHING.md); this
 # file is the shape of it, with nothing real in it.
 #
-# Nothing secret belongs in either file. GOOGLE_CLIENT_SECRET and
-# SESSION_SECRET are set with `npx wrangler secret put <NAME>` and live in
-# Cloudflare, never in the repo.
+# Nothing secret belongs in either file. GOOGLE_CLIENT_SECRET,
+# SESSION_SECRET and ANTHROPIC_API_KEY (optional -- see docs/DEPLOY.md) are
+# set with `npx wrangler secret put <NAME>` and live in Cloudflare, never
+# in the repo.
 
 name = "golf-trip-api"
 main = "src/index.ts"

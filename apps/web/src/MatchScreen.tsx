@@ -6,6 +6,7 @@ import type { MatchDetail } from "./api.ts";
 import { getDeviceIdentity, setDeviceIdentity, getStoredJoinCode, setStoredJoinCode } from "./lib/identity.ts";
 import { enqueue, flushMatch, queueForMatch } from "./lib/offlineQueue.ts";
 import { teamFormatLabel } from "./lib/formats.ts";
+import ScorecardImport from "./ScorecardImport.tsx";
 import "./MatchScreen.css";
 
 /** playerId + holeNumber -> gross, merging the server's last-known state
@@ -103,6 +104,7 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [checkingCode, setCheckingCode] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     api
@@ -284,6 +286,23 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
     flushMatch(matchId).then(() => setQueueSize(queueForMatch(matchId).length));
   };
 
+  // A confirmed scorecard import applying N holes across several players
+  // is exactly N of the same enqueue call setGross makes for one -- the
+  // only difference is one flush for the whole batch (the API already
+  // accepts a batch, see routes/matches.ts) instead of one per cell.
+  const applyImported = (entries: { playerId: string; holeNumber: number; gross: number | null }[]) => {
+    setScores((prev) => {
+      const next = new Map(prev);
+      for (const e of entries) next.set(`${e.playerId}:${e.holeNumber}`, e.gross);
+      return next;
+    });
+    for (const e of entries) {
+      enqueue({ matchId, playerId: e.playerId, holeNumber: e.holeNumber, gross: e.gross, enteredBy: me });
+    }
+    setQueueSize(queueForMatch(matchId).length);
+    flushMatch(matchId).then(() => setQueueSize(queueForMatch(matchId).length));
+  };
+
   return (
     <div className="match-screen">
       <button className="back-link" onClick={onBack}>← Board</button>
@@ -317,7 +336,19 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
         <button className={view === "card" ? "active" : ""} onClick={() => setView("card")}>
           Card
         </button>
+        {/* A screenshot or a photo of a paper card is the only thing that
+            ever leaves a scoring app like this -- see ScorecardImport.tsx
+            for why this is a photo importer and not an integration. Sits
+            beside the view toggle since it's really a third way to get
+            scores onto this screen, not a separate feature. */}
+        <button className="ocr-open-btn" onClick={() => setShowImport(true)}>
+          Import photo
+        </button>
       </div>
+
+      {showImport && (
+        <ScorecardImport match={match} onApply={applyImported} onClose={() => setShowImport(false)} />
+      )}
 
       {view === "card" ? (
         <MatchCard match={match} scores={scores} allocated={allocated} />

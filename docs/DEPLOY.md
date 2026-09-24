@@ -86,6 +86,7 @@ its own section below):
 | `GOOGLE_REDIRECT_URI` | `https://<this-deployment's-public-url>/api/auth/google/callback` — must be added to the OAuth client's allowed redirect URIs in Google Cloud Console, exactly, or every sign-in fails at Google's own consent screen. |
 | `SESSION_SECRET` | Any long random string, unique per deployment (`openssl rand -hex 32`). Signs the session cookie — rotating it logs everyone out, nothing worse. |
 | `ADMIN_EMAILS` | Comma-separated allow-list for `/admin`. |
+| `ANTHROPIC_API_KEY` | Optional. Powers the scorecard-photo import (Match screen's "Import photo" -- routes/matches.ts's POST /:id/scorecard-ocr). Leave unset and that one feature returns 501; nothing else depends on it. Get a key at [console.anthropic.com](https://console.anthropic.com). |
 | `PORT` | Most platforms inject this themselves; `node.ts` reads it and falls back to `8787`. |
 
 One Google OAuth client can list more than one redirect URI, so a single
@@ -109,6 +110,7 @@ What the live copy actually runs. See `docs/HOSTING.md` for why.
    ```
    npx wrangler secret put GOOGLE_CLIENT_SECRET
    npx wrangler secret put SESSION_SECRET
+   npx wrangler secret put ANTHROPIC_API_KEY   # optional -- see the table above
    ```
 4. `npm run build --workspace=apps/web` (wrangler's `[assets]` block serves
    this directly — no separate deploy step for the frontend).
@@ -116,8 +118,10 @@ What the live copy actually runs. See `docs/HOSTING.md` for why.
 6. `npx wrangler deploy` (from `apps/api`)
 
 Local dev needs none of the above except a `.dev.vars` file in `apps/api`
-(gitignored) with `GOOGLE_CLIENT_SECRET` and `SESSION_SECRET` — `wrangler
-dev` runs the real Workers runtime against a local D1 file automatically.
+(gitignored) with `GOOGLE_CLIENT_SECRET` and `SESSION_SECRET` (add
+`ANTHROPIC_API_KEY` too if you want to test the scorecard-photo import
+locally) — `wrangler dev` runs the real Workers runtime against a local D1
+file automatically.
 
 CI reference: `.github/workflows/deploy-api.yml` runs steps 4–6 on every
 push to `main` that touches `apps/api`, `apps/web`, or

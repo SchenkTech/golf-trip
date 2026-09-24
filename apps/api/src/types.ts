@@ -29,6 +29,13 @@ export interface Env {
    *  callback (src/routes/auth.ts) -- anyone can complete Google OAuth,
    *  but only these emails actually get a session. */
   ADMIN_EMAILS: string;
+  /** Real secret -- set via `wrangler secret put ANTHROPIC_API_KEY` (or
+   *  your host's equivalent). Powers the scorecard-photo import
+   *  (routes/matches.ts's POST /:id/scorecard-ocr, lib/scorecardOcr.ts).
+   *  Optional: a deployment with no key set simply has that one feature
+   *  return 501, same as any other config-gated endpoint -- see
+   *  docs/DEPLOY.md. */
+  ANTHROPIC_API_KEY?: string;
 }
 
 /** Every route's Hono generic: env bindings plus the one request-scoped

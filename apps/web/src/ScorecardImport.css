@@ -1,0 +1,163 @@
+@import "./theme.css";
+
+/* Third button beside Enter/Card -- inherits .view-toggle button's navy
+ * pill from MatchScreen.css by living in the same row; dashed so it reads
+ * as "open a tool" rather than a third view mode sitting equal to the
+ * other two. */
+.ocr-open-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px dashed var(--navy-ink-dim);
+  border-radius: 8px;
+  background: var(--navy);
+  color: var(--navy-ink-dim);
+  font-family: var(--display-font);
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ocr-import {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.ocr-import-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.ocr-import-header h3 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.ocr-close {
+  border: none;
+  background: none;
+  color: var(--ink-dim);
+  font-size: 16px;
+  line-height: 1;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.ocr-hint {
+  margin: 4px 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+/* A styled label wrapping a hidden file input -- the standard way to make
+ * a camera/file picker look like every other button here instead of the
+ * browser's own unstyled control. */
+.ocr-file-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  text-align: center;
+  background: var(--navy);
+  color: var(--navy-ink);
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ocr-file-btn input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.ocr-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--side-red-ink);
+}
+
+.ocr-note {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+
+.ocr-grid-wrap {
+  overflow-x: auto;
+}
+
+.ocr-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ocr-grid th,
+.ocr-grid td {
+  padding: 4px 6px;
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.ocr-grid th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+
+.ocr-hole-col {
+  color: var(--ink) !important;
+  font-weight: 700;
+}
+
+.ocr-player-select {
+  font-size: 11px;
+  padding: 3px 4px;
+  border-radius: 6px;
+  border: 1px solid var(--side-red);
+  background: var(--surface-2);
+  color: var(--ink);
+  max-width: 110px;
+}
+
+.ocr-cell-input {
+  width: 40px;
+  padding: 6px 2px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.ocr-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ocr-actions .code-submit {
+  flex: 1;
+  margin-top: 0;
+}

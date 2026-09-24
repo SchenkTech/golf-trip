@@ -77,6 +77,31 @@ a tee: seven columns on a phone forces horizontal scrolling and small targets.
 Rather than pick, ship both against the same data. `Enter` is one hole filling
 the screen; `Card` is the grid. A toggle, not a setting.
 
+## 9. Scorecard import is a photo reader, not an integration
+
+Checked whether the group's other scoring app exposes anything to connect
+to: no public API, no CSV or PDF export, no structured share format --
+confirmed against their own docs and app listing (which app, and the
+research, is in docs/TRIP.md -- the finding generalizes to any such app,
+so the reasoning stays here and the name doesn't). The only thing that
+ever leaves it is a picture a human looks at, which is also literally how
+its own "photo scorecard" feature gets a paper card in the other
+direction.
+
+So a photo is the whole integration surface, and it doesn't need to be
+Grint-specific -- a screenshot of their app and a photo of a paper card are
+the same input. `POST /:id/scorecard-ocr` sends the photo to a vision model
+with the match's real roster and holes, gets back proposed readings, and
+stops there: nothing is written until a person reviews the readings on
+screen and taps Apply, at which point it is the exact same batch write a
+manual tap makes (`POST /:id/scores`) -- same offline queue, same
+last-write-wins, same attribution. A misread number is a wrong *proposal*,
+never a silent write.
+
+`ANTHROPIC_API_KEY` is optional. A deployment that never sets it just has
+that one button return "not configured" -- nothing else depends on it,
+matching how every other config-gated feature here degrades.
+
 ---
 
 ## Open

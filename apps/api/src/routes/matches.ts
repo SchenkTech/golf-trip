@@ -1,8 +1,11 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
+import { env } from "hono/adapter";
 import type { ScoringFormat, TeamFormat } from "@gc/scoring";
 import { scoreMatchRows, strokeIndexesFor, segmentPointsFor } from "../lib/score.ts";
 import { loadPlayerLabels } from "../lib/players.ts";
+import { matchReadings } from "../lib/scorecardOcr.ts";
+import type { OcrResult } from "../lib/scorecardOcr.ts";
 import * as schema from "../db/schema.ts";
 import type { AppEnv } from "../types.ts";
 
@@ -201,4 +204,150 @@ matches.post("/:id/scores", async (c) => {
     ...scored,
     players: scored.players.map((p) => ({ ...p, name: labels.get(p.playerId) ?? p.playerId })),
   });
+});
+
+interface ScorecardOcrBody {
+  /** A data URL ("data:image/jpeg;base64,...") -- the client already has
+   *  the photo as a File/Blob, and a data URL is the one encoding every
+   *  runtime here (browser fetch, Workers fetch, Node fetch) agrees on
+   *  without a multipart-parsing dependency. */
+  image: string;
+  code?: string;
+}
+
+/** Claude's own tool-use forces the response into this exact shape
+ *  instead of hoping a free-text reply parses -- the one place this
+ *  route's correctness depends on the model choosing to follow
+ *  instructions rather than on a schema the API itself enforces. */
+const OCR_TOOL = {
+  name: "record_scorecard_readings",
+  description: "Record every hole score read from the scorecard photo.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      readings: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          properties: {
+            playerName: { type: "string" as const, description: "Exactly as printed or displayed on the card -- a nickname, initial, or full name. Do not normalize it." },
+            holeNumber: { type: "integer" as const, minimum: 1, maximum: 18 },
+            gross: { type: ["integer", "null"] as unknown as "integer", description: "Strokes for that player on that hole. null if genuinely illegible or blank -- never guess." },
+          },
+          required: ["playerName", "holeNumber", "gross"],
+        },
+      },
+      note: {
+        type: ["string", "null"] as unknown as "string",
+        description: "One line on anything you were not confident about -- smudged ink, an ambiguous column, holes you could not find. null if there is nothing to flag.",
+      },
+    },
+    required: ["readings", "note"],
+  },
+};
+
+/**
+ * Reads a photo of a scorecard and proposes hole scores for this match's
+ * roster -- see lib/scorecardOcr.ts for why this exists (there is nothing
+ * to integrate with; a photo is the only thing that ever leaves any
+ * scoring app, or a paper card).
+ *
+ * Returns proposed readings for the SCREEN to show, never writes a
+ * hole_score row. The actual write, once a person has reviewed and
+ * corrected the readings, goes through POST /:id/scores above --
+ * identical to a manual tap, same offline queue, same attribution.
+ *
+ * Gated by the event's join code exactly like a real score write, even
+ * though this endpoint writes nothing -- purely so a stranger who found
+ * the board's public URL can't spend the trip's API budget by lobbing
+ * photos at it.
+ */
+matches.post("/:id/scorecard-ocr", async (c) => {
+  const db = c.get("db");
+  const matchId = c.req.param("id");
+  const { ANTHROPIC_API_KEY } = env(c);
+
+  if (!ANTHROPIC_API_KEY) {
+    return c.json({ error: "scorecard import is not configured on this deployment (ANTHROPIC_API_KEY unset)" }, 501);
+  }
+
+  const body = await c.req.json<ScorecardOcrBody>();
+  if (!body?.image?.startsWith("data:image/")) {
+    return c.json({ error: "image required, as a data URL" }, 400);
+  }
+
+  const full = await db.query.match.findFirst({
+    where: eq(schema.match.id, matchId),
+    with: { players: true, round: { with: { event: true, teeSet: { with: { holes: true } } } } },
+  });
+  if (!full) return c.json({ error: "match not found" }, 404);
+
+  const requiredCode = full.round.event.joinCode;
+  if (requiredCode && body.code !== requiredCode) {
+    return c.json({ error: "wrong or missing join code" }, 403);
+  }
+
+  const labels = await loadPlayerLabels(db);
+  const roster = full.players.map((p) => ({ playerId: p.playerId, name: labels.get(p.playerId) ?? p.playerId }));
+  const pars = new Map(full.round.teeSet.holes.map((h) => [h.number, h.par]));
+  const holeList = [...pars.entries()].sort((a, b) => a[0] - b[0]).map(([n, par]) => `${n} (par ${par})`).join(", ");
+
+  const [, mimeType, base64] = body.image.match(/^data:(image\/[a-z+]+);base64,(.+)$/) ?? [];
+  if (!base64) return c.json({ error: "malformed image data URL" }, 400);
+
+  let apiResponse: Response;
+  try {
+    apiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-5",
+        max_tokens: 4096,
+        tools: [OCR_TOOL],
+        tool_choice: { type: "tool", name: OCR_TOOL.name },
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: mimeType, data: base64 } },
+              {
+                type: "text",
+                text:
+                  `This is a photo of a golf scorecard (from an app screenshot, or a paper card) for a match ` +
+                  `between: ${roster.map((p) => p.name).join(", ")}. The 18 holes and their par: ${holeList}. ` +
+                  `Read every gross score you can for every player and every hole. Use the player name exactly ` +
+                  `as it appears on the card, even if it doesn't match the names above -- do not correct or ` +
+                  `guess at it. If a hole is genuinely blank or illegible for a player, record gross as null ` +
+                  `rather than guessing a number.`,
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  } catch {
+    return c.json({ error: "could not reach the scorecard reader -- try again" }, 502);
+  }
+
+  if (!apiResponse.ok) {
+    // Never echo the provider's own response back to the client -- it can
+    // include request-identifying detail that has no business leaving
+    // this server for a debugging convenience nobody asked for.
+    return c.json({ error: `scorecard reader failed (${apiResponse.status})` }, 502);
+  }
+
+  const payload = await apiResponse.json<{ content: { type: string; input?: unknown }[] }>();
+  const toolUse = payload.content?.find((block) => block.type === "tool_use");
+  if (!toolUse || typeof toolUse.input !== "object" || toolUse.input === null) {
+    return c.json({ error: "scorecard reader returned an unexpected shape" }, 502);
+  }
+
+  const result = toolUse.input as OcrResult;
+  const matched = matchReadings(result, roster);
+
+  return c.json({ readings: matched, note: result.note ?? null, roster });
 });

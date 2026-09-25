@@ -11,7 +11,8 @@
  * lives in. It used to be reserved for one or two branded panels, which
  * left the app reading as tan-on-tan, with not enough colour anywhere.
  * The accents are the two teams' own colours -- see --side-red/--side-blue
- * below for which does what. There is no gold in this palette any more.
+ * below for which does what. Light mode carries no gold at all -- see
+ * --accent below for the one, deliberately narrow, dark-mode exception.
  *
  * Dark mode keeps its own earlier navy-black world (not sand-toned) --
  * tried a warm-dark version of the same sand palette and it read as muddy,
@@ -19,7 +20,21 @@
  *
  * Both palettes are structured for three states: no preference expressed
  * (bare :root, light), system dark (@media(prefers-color-scheme)), and an
- * explicit toggle (the [data-theme] blocks, driven by src/lib/theme.ts). */
+ * explicit toggle (the [data-theme] blocks, driven by src/lib/theme.ts).
+ *
+ * --accent/--accent-bright: the "interface" role --side-blue used to cover
+ * alone (see below) now goes through these instead, at the handful of call
+ * sites that meant "the interface accent," not "Team Blue" -- the current-
+ * hole highlight and selected-cell outline on the Match/Enter screen, and
+ * the active bottom-nav tab. In light mode they simply alias --side-blue,
+ * so nothing there changes. In dark mode only, at the user's request
+ * (matching a mockup), they're gold instead -- see memory
+ * golfclassic-dark-mode-gold-accent for the reasoning and
+ * golfclassic-dark-theme-pre-gold for what dark mode looked like right
+ * before this, if it needs undoing. --side-blue itself is untouched in
+ * both modes: the blue team's own branding (tiles, score blocks, player-
+ * side dots, the Card view's blue column) has to stay blue regardless of
+ * which colour the interface is borrowing this week. */
 
 :root {
   --ground: #f4e8d2;
@@ -66,6 +81,11 @@
   --side-red-bright: #e2856c;
   --side-blue-bright: #85c2e2;
 
+  /* The interface's own accent, kept distinct from --side-blue even though
+   * they're the same colour here -- see the file-header comment above. */
+  --accent: var(--side-blue);
+  --accent-bright: var(--side-blue-bright);
+
   /* A big, condensed display face for page titles and day headers --
    * borrowed from the group's own prototype (docs/SPEC.md treats that as a
    * real source, not a rough sketch). Body copy stays
@@ -89,6 +109,8 @@
     --navy-ink-dim: #a9bad4;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     --card: #1a2532;
+    --accent: #e0a72e;
+    --accent-bright: #f2c14e;
   }
 }
 
@@ -107,4 +129,6 @@
   --navy-ink-dim: #a9bad4;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   --card: #1a2532;
+  --accent: #e0a72e;
+  --accent-bright: #f2c14e;
 }

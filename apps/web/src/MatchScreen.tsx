@@ -92,6 +92,11 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
   const [error, setError] = useState<string | null>(null);
   const [scores, setScores] = useState<Map<string, number | null>>(new Map());
   const [holeIndex, setHoleIndex] = useState(0);
+  // Which player's cell the number pad below the grid is currently
+  // editing -- the grid can show every player's whole round at once, but
+  // only one cell is "live" at a time, the same way only one hole was
+  // "live" before this screen could show more than one.
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [view, setView] = useState<"enter" | "card">("enter");
   const [me, setMe] = useState<string | null>(getDeviceIdentity());
   const [online, setOnline] = useState(navigator.onLine);
@@ -115,10 +120,16 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
         // Land on the first hole that still needs entries, not always
         // hole 1 -- reopening a match half-scored should pick up where it
         // was left, on a course, one-handed.
+        const merged = mergeScores(m);
         const firstOpen = m.holes.findIndex((h) =>
-          m.players.some((p) => mergeScores(m).get(`${p.playerId}:${h.number}`) == null),
+          m.players.some((p) => merged.get(`${p.playerId}:${h.number}`) == null),
         );
+        const landingHole = m.holes[firstOpen === -1 ? 0 : firstOpen];
         setHoleIndex(firstOpen === -1 ? 0 : firstOpen);
+        // Land the pad on whoever's still missing a score for that hole,
+        // not always the first name on the roster.
+        const firstUnscoredPlayer = m.players.find((p) => merged.get(`${p.playerId}:${landingHole.number}`) == null);
+        setSelectedPlayerId((firstUnscoredPlayer ?? m.players[0])?.playerId ?? null);
       })
       .catch((e) => setError(String(e)));
   }, [matchId]);
@@ -278,12 +289,37 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
   }
 
   const hole = match.holes[holeIndex];
+  const activePlayerId = selectedPlayerId ?? match.players[0].playerId;
+  const activePlayer = match.players.find((p) => p.playerId === activePlayerId) ?? match.players[0];
+  const activeGross = scores.get(`${activePlayerId}:${hole.number}`) ?? null;
+
   const setGross = (playerId: string, gross: number | null) => {
     const key = `${playerId}:${hole.number}`;
     setScores((prev) => new Map(prev).set(key, gross));
     enqueue({ matchId, playerId, holeNumber: hole.number, gross, enteredBy: me });
     setQueueSize(queueForMatch(matchId).length);
     flushMatch(matchId).then(() => setQueueSize(queueForMatch(matchId).length));
+  };
+
+  // Tapping a cell in the grid is how you pick what the pad below edits --
+  // jumps the whole screen to that hole (so the grid's "current" column and
+  // the detail line under it agree with what you tapped) and hands the pad
+  // to that player.
+  const selectCell = (playerId: string, holeNumber: number) => {
+    setHoleIndex(holeNumber - 1);
+    setSelectedPlayerId(playerId);
+  };
+
+  // After a deliberate "this is the score" tap (a quick-pick number, not a
+  // ± nudge), jump the pad to whoever on this hole still doesn't have one --
+  // "Enter every player's score" without a tap in between to get there. Once
+  // everyone's filled, leave the pad where it is rather than bouncing it
+  // back to the top.
+  const advanceAfterQuickPick = (justSetPlayerId: string) => {
+    const next = match.players.find(
+      (p) => p.playerId !== justSetPlayerId && (scores.get(`${p.playerId}:${hole.number}`) ?? null) == null,
+    );
+    if (next) setSelectedPlayerId(next.playerId);
   };
 
   // A confirmed scorecard import applying N holes across several players
@@ -354,53 +390,128 @@ export default function MatchScreen({ matchId, onBack }: { matchId: string; onBa
         <MatchCard match={match} scores={scores} allocated={allocated} />
       ) : (
         <>
-          <div className="hole-nav">
-            <button disabled={holeIndex === 0} onClick={() => setHoleIndex((i) => Math.max(0, i - 1))}>‹</button>
-            <div className="hole-info">
-              <span className="hole-number">Hole {hole.number}</span>
-              <span className="hole-detail">Par {hole.par} · SI {hole.strokeIndex}{hole.yards ? ` · ${hole.yards}y` : ""}</span>
-            </div>
-            <button disabled={holeIndex === 17} onClick={() => setHoleIndex((i) => Math.min(17, i + 1))}>›</button>
+          {/* Every hole, every player, one grid -- tap any cell to hand it
+              to the pad below (selectCell), rather than stepping to a hole
+              first and only then seeing its row. The grid itself never
+              writes a score; it only ever points the pad at one. */}
+          <div className="hole-strip-wrap">
+            <table className="hole-strip-table">
+              <tbody>
+                <tr className="hole-strip-header-row">
+                  <th className="hole-strip-label">Hole</th>
+                  {match.holes.map((h) => (
+                    <td key={h.number} className={h.number === hole.number ? "current" : ""}>
+                      <button
+                        type="button"
+                        className="hole-strip-num"
+                        onClick={() => selectCell(activePlayerId, h.number)}
+                      >
+                        {h.number}
+                      </button>
+                    </td>
+                  ))}
+                </tr>
+                <tr className="hole-strip-header-row">
+                  <th className="hole-strip-label">Par</th>
+                  {match.holes.map((h) => (
+                    <td key={h.number} className={h.number === hole.number ? "current" : ""}>
+                      {h.par}
+                    </td>
+                  ))}
+                </tr>
+                <tr className="hole-strip-header-row">
+                  <th className="hole-strip-label">Hdcp</th>
+                  {match.holes.map((h) => (
+                    <td key={h.number} className={h.number === hole.number ? "current" : ""}>
+                      {h.strokeIndex}
+                    </td>
+                  ))}
+                </tr>
+                {match.players.map((p) => (
+                  <tr key={p.playerId}>
+                    <th className={`hole-strip-label side-${p.side.toLowerCase()}`}>
+                      <span className="hole-strip-player-name">{p.name}</span>
+                      <span className="hole-strip-player-sub">
+                        {p.strokesReceived === 0 ? "scratch" : `gets ${p.strokesReceived}`}
+                      </span>
+                    </th>
+                    {match.holes.map((h) => {
+                      const gross = scores.get(`${p.playerId}:${h.number}`) ?? null;
+                      // How many shots this player gets on THIS hole -- from
+                      // allocateStrokes, not a stroke-index threshold check.
+                      // A high enough handicap (this roster has one over 40)
+                      // gets a second or third shot on the hardest holes,
+                      // which a simple "<=" check can't express.
+                      const shotsHere = allocated.get(p.playerId)?.[h.number - 1] ?? 0;
+                      const isSelected = p.playerId === activePlayerId && h.number === hole.number;
+                      return (
+                        <td key={h.number} className={h.number === hole.number ? "current" : ""}>
+                          <button
+                            type="button"
+                            className={`hole-grid-cell ${isSelected ? "selected" : ""} ${gross !== null ? "filled" : ""}`}
+                            onClick={() => selectCell(p.playerId, h.number)}
+                          >
+                            {shotsHere > 0 && (
+                              <span
+                                className="hole-grid-dot"
+                                title={shotsHere > 1 ? `Gets ${shotsHere} shots here` : "Gets a shot here"}
+                              />
+                            )}
+                            {gross ?? ""}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <div className="player-scores">
-        {match.players.map((p) => {
-          const gross = scores.get(`${p.playerId}:${hole.number}`) ?? null;
-          // How many shots this player actually gets on THIS hole -- from
-          // allocateStrokes, same as the live standing above, not a
-          // stroke-index threshold check. A high enough handicap (this
-          // roster has one over 40) gets a second or third shot on the
-          // hardest holes, which a simple "<=" check can't express.
-          const shotsHere = allocated.get(p.playerId)?.[hole.number - 1] ?? 0;
-          return (
-            <div key={p.playerId} className="player-score-row">
-              <div className="player-score-name">
-                <span className={`side-dot side-${p.side.toLowerCase()}`} />
-                {p.name}
-                {shotsHere > 0 && (
-                  <span className="stroke-dot" title={shotsHere > 1 ? `Gets ${shotsHere} shots here` : "Gets a shot here"}>
-                    {shotsHere > 1 ? shotsHere : ""}
-                  </span>
-                )}
-              </div>
-              <div className="stepper">
-                <button
-                  className="stepper-btn"
-                  onClick={() => setGross(p.playerId, gross === null ? hole.par : Math.max(1, gross - 1))}
-                >
-                  −
-                </button>
-                <span className="stepper-value">{gross ?? "–"}</span>
-                <button
-                  className="stepper-btn"
-                  onClick={() => setGross(p.playerId, gross === null ? hole.par : gross + 1)}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          );
-        })}
+          <p className="hole-current-detail">
+            {activePlayer.name} · Hole {hole.number} · Par {hole.par} · Hdcp {hole.strokeIndex}
+            <br />
+            Enter every player's score for this hole
+          </p>
+
+          <div className="score-pad">
+            <button
+              type="button"
+              className="score-pad-btn score-pad-shift"
+              onClick={() => setGross(activePlayerId, activeGross === null ? hole.par : Math.max(1, activeGross - 1))}
+            >
+              −
+            </button>
+            {Array.from({ length: 5 }, (_, i) => Math.max(1, hole.par - 1) + i).map((n) => (
+              <button
+                key={n}
+                type="button"
+                className={`score-pad-btn ${activeGross === n ? "active" : ""}`}
+                onClick={() => {
+                  setGross(activePlayerId, n);
+                  advanceAfterQuickPick(activePlayerId);
+                }}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="score-pad-btn score-pad-shift"
+              onClick={() => setGross(activePlayerId, activeGross === null ? hole.par : activeGross + 1)}
+            >
+              +
+            </button>
+          </div>
+
+          <div className="hole-step-nav">
+            <button disabled={holeIndex === 0} onClick={() => setHoleIndex((i) => Math.max(0, i - 1))}>
+              ‹ Prev
+            </button>
+            <button onClick={() => setGross(activePlayerId, null)}>Clear</button>
+            <button disabled={holeIndex === 17} onClick={() => setHoleIndex((i) => Math.min(17, i + 1))}>
+              Next ›
+            </button>
           </div>
         </>
       )}

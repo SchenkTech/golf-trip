@@ -163,129 +163,183 @@
   color: var(--side-red-ink);
 }
 
-.hole-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--surface);
+/* Holes as columns, players as rows -- the same MatchCard grid (below)
+ * transposed, so scrolling sideways through the round replaces stepping
+ * one hole at a time. Every cell is tappable (.hole-grid-cell): tapping one
+ * is how you pick which player+hole the pad further down is editing. */
+.hole-strip-wrap {
+  overflow-x: auto;
+  margin-bottom: 12px;
   border: 1px solid var(--rule);
-  border-radius: 16px;
-  padding: 10px 6px;
-  margin-bottom: 16px;
+  border-radius: 14px;
+  background: var(--surface);
 }
 
-.hole-nav button {
-  width: 48px;
-  height: 48px;
-  font-size: 22px;
-  background: none;
-  border: none;
+.hole-strip-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hole-strip-table th,
+.hole-strip-table td {
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Sticky so a row's label (Hole/Par/Hdcp, or a player's name) stays put
+ * while the 18 holes scroll under it. display:flex/column also carries a
+ * player's two-line label (name, handicap note) -- the Hole/Par/Hdcp rows
+ * only ever put one child in here, so it costs them nothing. */
+.hole-strip-label {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: normal;
+}
+
+.hole-strip-player-name {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--ink);
+}
+
+.hole-strip-player-sub {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.hole-strip-label.side-red {
+  color: var(--side-red);
+}
+
+.hole-strip-label.side-blue {
+  color: var(--side-blue);
+}
+
+.hole-strip-header-row {
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-dim);
+}
+
+.hole-strip-num {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.hole-nav button:disabled {
-  color: var(--rule);
-  cursor: default;
+/* The hole the pad below is on -- everywhere this column passes through
+ * (Hole/Par/Hdcp and every player's row) gets the same tint so it reads as
+ * one column, not just a highlighted number. --accent, not --side-blue: this
+ * is "the interface says so," not Team Blue (see theme.css). */
+td.current {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
-.hole-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+td.current .hole-strip-num {
+  background: var(--accent);
+  color: #fff;
 }
 
-.hole-number {
-  font-size: 20px;
-  font-weight: 800;
+/* One tap target per hole per player -- big enough for cold hands and one
+ * bar of signal (docs/SPEC.md), dashed while empty so the grid still reads
+ * as "nothing entered yet" at a glance, solid once it holds a score. */
+.hole-grid-cell {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border: 1.5px dashed var(--rule);
+  border-radius: 8px;
+  background: none;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
 }
 
-.hole-detail {
+.hole-grid-cell.filled {
+  border-style: solid;
+  background: var(--card);
+}
+
+/* The one cell the pad further down is actually editing right now -- the
+ * loudest thing in the grid on purpose, since it's the answer to "what am I
+ * about to change" every time the pad is tapped. */
+.hole-grid-cell.selected {
+  border: 2px solid var(--accent);
+  background: var(--card);
+}
+
+/* A shot received on this hole -- same signal as the old per-row
+ * stroke-dot, just small enough to sit inside a 34px cell without crowding
+ * the score it's attached to. */
+.hole-grid-dot {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--side-red);
+}
+
+.hole-strip-table td:has(.hole-grid-cell) {
+  padding: 3px;
+}
+
+.hole-current-detail {
+  text-align: center;
+  margin: 0 0 14px;
   font-size: 13px;
+  line-height: 1.5;
   color: var(--ink-dim);
-  margin-top: 2px;
 }
 
-.player-scores {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.player-score-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
-  padding: 14px 16px;
-}
-
-.player-score-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.side-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ink-dim);
-}
-
-/* Side is engine vocabulary (RED/BLUE), not a UI color scheme -- see
- * schema.ts's note on team.color -- so these two dots are only meant to
- * separate "this player" from "that player" at a glance, not to carry team
- * branding the way the logos already do. Colors come from theme.css's
- * --side-red/--side-blue, shared with the Teams screen. */
-.side-dot.side-red {
-  background: var(--side-red);
-}
-
-.side-dot.side-blue {
-  background: var(--side-blue);
-}
-
-.stroke-dot {
-  min-width: 6px;
-  min-height: 6px;
-  padding: 0;
-  border-radius: 50%;
-  background: var(--side-red);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* A stroke count of 2+ needs room for a digit -- still reads as the same
-   dot, just big enough to hold a character when a hole gives more than
-   one shot (see MatchScreen.tsx's shotsHere). */
-.stroke-dot:not(:empty) {
-  width: 15px;
-  height: 15px;
-  font-size: 10px;
+.hole-current-detail::first-line {
+  font-size: 15px;
   font-weight: 700;
-  color: var(--navy);
+  color: var(--ink);
 }
 
-.stepper {
+/* The pad that actually writes a score, for whichever cell above is
+ * .selected -- a fixed set of quick picks around this hole's par (fewer
+ * taps than stepping there one at a time from null) flanked by ± for
+ * anything outside that range. Same filled-navy "most pressed control"
+ * treatment the old stepper used. */
+.score-pad {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  gap: 6px;
+  margin-bottom: 14px;
 }
 
-/* Cold hands, one bar of signal (docs/SPEC.md) -- these are the most
- * pressed controls in the app, so they're the most obviously pressable:
- * filled navy, team blue while your thumb is down. */
-.stepper-btn {
-  width: 44px;
-  height: 44px;
-  font-size: 22px;
+.score-pad-btn {
+  flex: 1;
+  height: 48px;
+  font-size: 18px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   border: 1px solid var(--navy);
   border-radius: 10px;
   background: var(--navy);
@@ -293,18 +347,43 @@
   cursor: pointer;
 }
 
-.stepper-btn:active {
+.score-pad-btn:active {
   background: var(--side-blue);
   border-color: var(--side-blue);
   color: #fff;
 }
 
-.stepper-value {
-  width: 40px;
-  text-align: center;
-  font-size: 22px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+.score-pad-btn.active {
+  background: var(--side-blue);
+  border-color: var(--side-blue);
+  color: #fff;
+}
+
+.score-pad-shift {
+  flex: 0.7;
+}
+
+.hole-step-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.hole-step-nav button {
+  flex: 1;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.hole-step-nav button:disabled {
+  color: var(--rule);
+  cursor: default;
 }
 
 .view-toggle {

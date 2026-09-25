@@ -44,6 +44,41 @@ body {
   margin-bottom: 8px;
 }
 
+.hero-eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--navy-ink-dim);
+}
+
+/* Red, not a new colour -- this palette already uses red for "the moment"
+ * (theme.css), and a live match is exactly that. */
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--side-red-bright);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--side-red-bright);
+}
+
 .event-header {
   display: flex;
   align-items: center;
@@ -137,6 +172,64 @@ body {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
+  line-height: 1;
+}
+
+/* The Board's own big score blocks -- a bolder, full-bleed take on
+ * .team-tile above (which History's all-time hero still uses as-is; this
+ * is a Board-only layout experiment, not a replacement of that shared
+ * shape). Same side colours, same numbers, just filled rather than
+ * outlined and side by side at full width. */
+.score-blocks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border-radius: 14px;
+  padding: 14px 10px 16px;
+  box-shadow: var(--shadow);
+  color: var(--navy-ink);
+}
+
+.score-block.side-red {
+  background: var(--side-red);
+}
+
+.score-block.side-blue {
+  background: var(--side-blue);
+}
+
+.score-block-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.score-block-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.score-block-name {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.score-block-points {
+  font-size: 44px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 

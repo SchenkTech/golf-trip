@@ -89,9 +89,23 @@ function Board() {
     event.teams.find((t) => t.color === "BLUE"),
   ];
 
+  // True while any match has holes on the board and isn't finished yet --
+  // same "in progress" test MatchRow uses for its standing badge, just
+  // rolled up across every round instead of one match.
+  const live = rounds.some((r) => r.matches.some((m) => m.holesPlayed > 0 && !m.decided));
+
   return (
     <main className="board">
       <div className="hero">
+        <div className="hero-eyebrow-row">
+          <span className="hero-eyebrow">Scoreboard</span>
+          {live && (
+            <span className="live-badge">
+              <span className="live-dot" />
+              Live
+            </span>
+          )}
+        </div>
         <header className="event-header">
           {event.logoUrl && <img className="event-logo" src={event.logoUrl} alt="" />}
           <div>
@@ -102,13 +116,15 @@ function Board() {
           </div>
         </header>
 
-        <section className="score-bar">
+        <section className="score-blocks">
           {[red, blue].map((t) =>
             t ? (
-              <div key={t.id} className={`team-tile side-${t.color.toLowerCase()}`}>
-                {t.logoUrl && <img className="team-logo" src={t.logoUrl} alt="" />}
-                <span className="team-name">{t.name}</span>
-                <span className="team-points">{t.points}</span>
+              <div key={t.id} className={`score-block side-${t.color.toLowerCase()}`}>
+                <div className="score-block-team">
+                  {t.logoUrl && <img className="score-block-logo" src={t.logoUrl} alt="" />}
+                  <span className="score-block-name">{t.name}</span>
+                </div>
+                <span className="score-block-points">{t.points}</span>
               </div>
             ) : null,
           )}

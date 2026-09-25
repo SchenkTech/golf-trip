@@ -37,9 +37,10 @@
   letter-spacing: 0.01em;
 }
 
-/* Team blue is "this one" everywhere in the app -- the selected day tab,
- * the focus ring, and here the tab you're on. The bright variant, because
+/* The interface's own accent says "the tab you're on" -- --accent-bright,
+ * not team blue (see theme.css): in light mode the two are the same colour,
+ * in dark mode this one goes gold. The bright variant either way, since
  * this sits on navy. */
 .bottom-nav-link.active {
-  color: var(--side-blue-bright);
+  color: var(--accent-bright);
 }

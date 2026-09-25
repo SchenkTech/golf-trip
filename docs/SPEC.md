@@ -11,6 +11,13 @@ centre and active by default. That is what "in app format" means here: a web app
 wearing native clothes. Design for a thumb at the bottom of a phone, not a
 cursor at the top of a page.
 
+**Built:** five tabs, not six — Matches, Teams, Board, History, More. Rules and
+Admin sit behind More instead of each owning a tab: neither is a screen most
+visits touch, and a sixth icon was cramped on a phone held one-handed. Both
+keep their own route (`/rules`, `/admin`) and their own screen — More is a
+two-row list that links to each, not a merger of the two. See
+docs/DECISIONS.md #10.
+
 **It needs no login to read.** The board is public; the score is the first thing
 you see. A "Welcome back" login wall in front of a scoreboard is almost always a
 platform default rather than a decision, and it is exactly the friction this app

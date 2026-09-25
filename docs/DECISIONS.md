@@ -113,6 +113,22 @@ the grid and taps Apply, at which point it is the exact same batch write a
 manual tap makes (`POST /:id/scores`) -- same offline queue, same
 last-write-wins, same attribution.
 
+## 10. Rules and Admin move behind a "More" tab
+
+The bottom nav had grown to six tabs (Board, Matches, Teams, History, Rules,
+Admin) as features were added one at a time, each grabbing its own icon.
+Six is cramped on a phone held one-handed, and two of the six are pages most
+visits never touch: Rules gets read once a year, before anyone's asked "wait,
+so the back nine is separate?", and Admin is three screens for two or three
+people (docs/SPEC.md).
+
+Condensed to five: Matches, Teams, Board (centred, per docs/SPEC.md's
+original "Board in the centre" line, which the six-tab bar had drifted away
+from), History, More. More is a plain two-row list linking to Rules and
+Admin — both keep their own route and screen, so a direct link to either
+still works. Nothing about Rules or Admin's own access rules changed; only
+how a tab bar reaches them did.
+
 ---
 
 ## Open

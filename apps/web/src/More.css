@@ -1,0 +1,60 @@
+@import "./theme.css";
+
+.more-page {
+  padding-bottom: 40px;
+}
+
+.more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Same white bubble as a .rule-card (Rules.css) or a roster row (Teams.css)
+ * -- every tappable list row in this app reads as a raised card, not a
+ * flat table line. */
+.more-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.more-link-icon {
+  display: flex;
+  color: var(--side-blue-ink);
+  flex-shrink: 0;
+}
+
+.more-link-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.more-link-label {
+  font-family: var(--display-font);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--side-blue-ink);
+}
+
+.more-link-sub {
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.more-link svg:last-child {
+  color: var(--ink-dim);
+  flex-shrink: 0;
+}

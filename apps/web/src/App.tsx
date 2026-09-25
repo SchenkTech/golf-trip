@@ -7,6 +7,7 @@ import Teams from "./Teams.tsx";
 import History from "./History.tsx";
 import Rules from "./Rules.tsx";
 import Admin from "./Admin.tsx";
+import More from "./More.tsx";
 import RoundSection from "./RoundSection.tsx";
 import Nav from "./Nav.tsx";
 import ThemeToggle from "./ThemeToggle.tsx";
@@ -174,6 +175,8 @@ function Screens() {
         <Rules />
       ) : path === "/admin" ? (
         <Admin />
+      ) : path === "/more" ? (
+        <More />
       ) : (
         <Board />
       )}

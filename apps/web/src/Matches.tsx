@@ -6,7 +6,7 @@ import HistoricalTrip from "./HistoricalTrip.tsx";
 import TripPicker, { tripName } from "./TripPicker.tsx";
 import type { Trip } from "./TripPicker.tsx";
 import { formatWeekday } from "./lib/format.ts";
-import { declaredScore, sideLabelsFor } from "./lib/sides.ts";
+import { declaredScore, sideLabelsFor, sideNamesFor } from "./lib/sides.ts";
 import { formatPoints } from "./lib/format.ts";
 import "./Rules.css";
 import "./Matches.css";
@@ -15,7 +15,13 @@ const REFRESH_MS = 20_000;
 
 /** Both sides' total points for a historical year, from its own match
  *  records -- these years have no team rows to read a score off (see the
- *  API's schema.ts), so the result line adds up what was recorded. */
+ *  API's schema.ts), so the result line adds up what was recorded.
+ *
+ *  Printed using the current event's real team names (sideNamesFor) once a
+ *  recorded side is matched to one, the same as History.tsx's identical
+ *  fix -- otherwise this and a live event's result line read differently
+ *  ("FOX 8 – 6 WOLF" next to "Team Fox 6 – 8 Team Wolf") for what's the
+ *  same two teams. */
 function historicalResult(year: HistoricalYear, teams: EventSummary["teams"]): string | null {
   const totals = new Map<string, number>();
   for (const r of year.rounds) {
@@ -23,9 +29,17 @@ function historicalResult(year: HistoricalYear, teams: EventSummary["teams"]): s
       for (const s of m.sides) totals.set(s.side, (totals.get(s.side) ?? 0) + s.points);
     }
   }
+  const labels = sideLabelsFor(teams);
+  const names = sideNamesFor(teams);
+  const redTotal = labels && names ? totals.get(labels.RED) : undefined;
+  const blueTotal = labels && names ? totals.get(labels.BLUE) : undefined;
+  if (labels && names && redTotal !== undefined && blueTotal !== undefined) {
+    return `${names.RED} ${formatPoints(redTotal)} – ${formatPoints(blueTotal)} ${names.BLUE}`;
+  }
   const sides = [...totals.keys()].sort();
-  // No match records: fall back to whatever the group remembers.
-  if (sides.length !== 2) return declaredScore(year, sideLabelsFor(teams));
+  // No match records, or sides this event's teams don't resolve: fall back
+  // to whatever the group remembers / the raw recorded labels.
+  if (sides.length !== 2) return declaredScore(year, labels, names);
   return `${sides[0]} ${formatPoints(totals.get(sides[0]) ?? 0)} – ${formatPoints(totals.get(sides[1]) ?? 0)} ${sides[1]}`;
 }
 

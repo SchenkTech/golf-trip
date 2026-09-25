@@ -25,19 +25,28 @@ export type SideKey = "RED" | "BLUE";
 /** The declared final score of a year with no match detail, written the way
  *  a derived one is ("FOX 10 – 7 WOLF"), so the two read alike on screen.
  *  Needs the losing side's name, which only the other team can supply.
- *  Null when the group hasn't said what the score was. */
+ *  Null when the group hasn't said what the score was.
+ *
+ *  `names`, when given, prints the resolved side's real team name (via
+ *  sideNamesFor) instead of `winner`'s raw stored text and the bare
+ *  upper-case label -- callers that want a historical year's declared
+ *  score to read exactly like a live event's ("Team Fox 10 – 7 Team Wolf")
+ *  pass it; omitting it keeps the older upper-case-label behaviour. */
 export function declaredScore(
   year: { winner: string | null; winnerPoints: number | null; loserPoints: number | null },
   labels: SideLabels | null,
+  names: SideLabels | null = null,
 ): string | null {
   const { winner, winnerPoints, loserPoints } = year;
   if (!winner) return null;
-  if (winnerPoints === null || loserPoints === null) return `${winner} won`;
   const key = sideKeyFor(winner, labels);
-  const loser = key && labels ? (key === "RED" ? labels.BLUE : labels.RED) : null;
-  return loser
-    ? `${winner} ${winnerPoints} – ${loserPoints} ${loser}`
-    : `${winner} won ${winnerPoints}–${loserPoints}`;
+  const loserLabel = key && labels ? (key === "RED" ? labels.BLUE : labels.RED) : null;
+  const winnerOut = key && names ? names[key] : winner;
+  const loserOut = key && names ? names[key === "RED" ? "BLUE" : "RED"] : loserLabel;
+  if (winnerPoints === null || loserPoints === null) return `${winnerOut} won`;
+  return loserOut
+    ? `${winnerOut} ${winnerPoints} – ${loserPoints} ${loserOut}`
+    : `${winnerOut} won ${winnerPoints}–${loserPoints}`;
 }
 
 /** The side label a team would have been recorded under: its name without
@@ -69,6 +78,19 @@ export function sideLabelsFor(teams: EventSummary["teams"]): SideLabels | null {
   // side of the all-time score.
   if (!labels.RED || !labels.BLUE || labels.RED === labels.BLUE) return null;
   return labels;
+}
+
+/** The two teams' real names ("Team Fox"), keyed by side -- for *printing*
+ *  an old year's score once its free-text side has been matched to a team
+ *  (via sideLabelsFor/sideKeyFor above), so a historical year's score line
+ *  reads the same way a live event's already does instead of the bare
+ *  upper-case label the matching itself runs on. Same one-of-each-colour
+ *  requirement as sideLabelsFor. */
+export function sideNamesFor(teams: EventSummary["teams"]): SideLabels | null {
+  const red = teams.find((t) => t.color === "RED");
+  const blue = teams.find((t) => t.color === "BLUE");
+  if (!red || !blue) return null;
+  return { RED: red.name, BLUE: blue.name };
 }
 
 /** Which team a recorded side belongs to, or null if it matches neither --

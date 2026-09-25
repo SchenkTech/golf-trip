@@ -3,7 +3,7 @@ import { api } from "./api.ts";
 import type { AllTimeStats, EventListItem, EventRound, EventSummary, HistoricalYear } from "./api.ts";
 import { Link } from "./router.tsx";
 import { formatDate, formatPoints, tripName } from "./lib/format.ts";
-import { declaredScore, sideKeyFor, sideLabelsFor } from "./lib/sides.ts";
+import { declaredScore, sideKeyFor, sideLabelsFor, sideNamesFor } from "./lib/sides.ts";
 import type { SideKey, SideLabels } from "./lib/sides.ts";
 import "./History.css";
 
@@ -33,8 +33,19 @@ function historicalTotals(year: HistoricalYear): Map<string, number> {
 
 /** One line per trip -- what a year's own card would show as its header
  *  score/status, reused so "All Time" and a single year's card can never
- *  say different things about the same year. */
-function yearSummary(m: MergedYear, labels: SideLabels | null = null): { result: string | null; status: string } {
+ *  say different things about the same year.
+ *
+ *  `names` (sideNamesFor's real team names) is what makes an old year's
+ *  line print "Team Fox 10 – 7 Team Wolf" instead of "FOX 10 – 7 WOLF" --
+ *  without it, both branches below fall back to whatever the source data
+ *  actually said, same as before this existed. An event year already uses
+ *  its own teams' real names directly, so it needs neither `labels` nor
+ *  `names` to already read this way. */
+function yearSummary(
+  m: MergedYear,
+  labels: SideLabels | null = null,
+  names: SideLabels | null = null,
+): { result: string | null; status: string } {
   if (m.kind === "event") {
     const { event, rounds } = m.data;
     const anyPlayed = rounds.some((r) => r.matches.some((match) => match.holesPlayed > 0));
@@ -48,7 +59,7 @@ function yearSummary(m: MergedYear, labels: SideLabels | null = null): { result:
 
   const hasMatches = m.data.rounds.some((r) => r.matches.length > 0);
   if (!hasMatches) {
-    const declared = declaredScore(m.data, labels);
+    const declared = declaredScore(m.data, labels, names);
     if (declared) {
       // A remembered score is a final score; only the match-by-match
       // detail is missing, and the year's own card says so.
@@ -58,6 +69,19 @@ function yearSummary(m: MergedYear, labels: SideLabels | null = null): { result:
     return { result: null, status: "Round scores only" };
   }
   const totals = historicalTotals(m.data);
+  // Resolve each recorded side to this event's real RED/BLUE teams where
+  // possible, printed in the same red-then-blue order an event year uses --
+  // falls back to the raw recorded labels, alphabetised, only when that
+  // resolution isn't available (no `labels`/`names`, or a side that matches
+  // neither team).
+  const redTotal = labels && names ? totals.get(labels.RED) : undefined;
+  const blueTotal = labels && names ? totals.get(labels.BLUE) : undefined;
+  if (labels && names && redTotal !== undefined && blueTotal !== undefined) {
+    return {
+      result: `${names.RED} ${formatPoints(redTotal)} – ${formatPoints(blueTotal)} ${names.BLUE}`,
+      status: "Final",
+    };
+  }
   const sideNames = [...totals.keys()].sort();
   const result =
     sideNames.length === 2
@@ -132,8 +156,9 @@ function cumulativePoints(years: MergedYear[], labels: SideLabels | null): Recor
   return totals;
 }
 
-/** Same navy hero band the Board uses, same logos -- the same two teams
- *  every year, tallying decided trips instead of one event's points.
+/** Same navy hero band and score blocks the Board uses (App.css's
+ *  .score-blocks -- see App.tsx's Board), so a big team score reads the
+ *  same shape whether it's this weekend's points or the all-time tally.
  *  Names and logos come from the current event's real team rows, since
  *  historical years have no `team` row of their own to draw from, and
  *  those same names are what an old year's recorded sides are matched
@@ -163,16 +188,20 @@ function AllTimeHero({ years, teams }: { years: MergedYear[]; teams: EventSummar
           </p>
         </div>
       </header>
-      <section className="score-bar">
-        <div className="team-tile side-red">
-          {redTeam?.logoUrl && <img className="team-logo" src={redTeam.logoUrl} alt="" />}
-          <span className="team-name">{redTeam?.name ?? "Red"}</span>
-          <span className="team-points">{wins.RED}</span>
+      <section className="score-blocks">
+        <div className="score-block side-red">
+          <div className="score-block-team">
+            {redTeam?.logoUrl && <img className="score-block-logo" src={redTeam.logoUrl} alt="" />}
+            <span className="score-block-name">{redTeam?.name ?? "Red"}</span>
+          </div>
+          <span className="score-block-points">{wins.RED}</span>
         </div>
-        <div className="team-tile side-blue">
-          {blueTeam?.logoUrl && <img className="team-logo" src={blueTeam.logoUrl} alt="" />}
-          <span className="team-name">{blueTeam?.name ?? "Blue"}</span>
-          <span className="team-points">{wins.BLUE}</span>
+        <div className="score-block side-blue">
+          <div className="score-block-team">
+            {blueTeam?.logoUrl && <img className="score-block-logo" src={blueTeam.logoUrl} alt="" />}
+            <span className="score-block-name">{blueTeam?.name ?? "Blue"}</span>
+          </div>
+          <span className="score-block-points">{wins.BLUE}</span>
         </div>
       </section>
       <p className="points-available">
@@ -187,7 +216,17 @@ function AllTimeHero({ years, teams }: { years: MergedYear[]; teams: EventSummar
  *  trip's matches -- the match-by-match detail lives on Matches behind its
  *  trip picker now (see Matches.tsx), so this is the list that sends you
  *  there rather than a second place telling the same story. */
-function AllTimeSummary({ years, currentYear, labels }: { years: MergedYear[]; currentYear: number | null; labels: SideLabels | null }) {
+function AllTimeSummary({
+  years,
+  currentYear,
+  labels,
+  names,
+}: {
+  years: MergedYear[];
+  currentYear: number | null;
+  labels: SideLabels | null;
+  names: SideLabels | null;
+}) {
   return (
     <div className="year-scores-wrap">
       <table className="year-scores-table">
@@ -200,7 +239,7 @@ function AllTimeSummary({ years, currentYear, labels }: { years: MergedYear[]; c
         </thead>
         <tbody>
           {years.map((m) => {
-            const { result, status } = yearSummary(m, labels);
+            const { result, status } = yearSummary(m, labels, names);
             return (
               <tr key={m.year}>
                 <td>
@@ -458,7 +497,7 @@ export default function History() {
 
       <div className="years-list">
         <p className="year-scores-title">Every trip</p>
-        <AllTimeSummary years={merged} currentYear={currentYear} labels={sideLabelsFor(teams)} />
+        <AllTimeSummary years={merged} currentYear={currentYear} labels={sideLabelsFor(teams)} names={sideNamesFor(teams)} />
         {allTime && <AllTimePlayers stats={allTime} />}
         {futureYears.length > 0 && (
           <>

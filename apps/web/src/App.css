@@ -107,79 +107,11 @@ body {
   color: var(--navy-ink-dim);
 }
 
-.score-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-/* White bubble on the sand ground, bordered in the team's own side color --
- * each team's own text colour (see Teams.css's identical --side-red/
- * --side-blue convention) -- that red and blue are the accent pair the
- * whole app runs on now (see theme.css). */
-.team-tile {
-  background: var(--card);
-  /* The hero band sets a near-white text colour for itself; a white bubble
-   * sitting inside it has to set its own back, or anything that doesn't
-   * name a colour (a team name with no side, on History's all-time hero)
-   * comes out white on white. */
-  color: var(--ink);
-  /* On the navy band a white bubble needs no outline of its own -- the
-   * border is here for the side colours below to take over. */
-  border: 2px solid color-mix(in srgb, var(--navy-ink) 25%, transparent);
-  border-radius: 14px;
-  padding: 14px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  box-shadow: var(--shadow);
-}
-
-.team-tile.side-red {
-  border-color: var(--side-red);
-}
-
-.team-tile.side-blue {
-  border-color: var(--side-blue);
-}
-
-.team-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.team-name {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.team-tile.side-red .team-name {
-  color: var(--side-red);
-}
-
-.team-tile.side-blue .team-name {
-  color: var(--side-blue);
-}
-
-.team-points {
-  font-size: 34px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  line-height: 1;
-}
-
-/* The Board's own big score blocks -- a bolder, full-bleed take on
- * .team-tile above (which History's all-time hero still uses as-is; this
- * is a Board-only layout experiment, not a replacement of that shared
- * shape). Same side colours, same numbers, just filled rather than
- * outlined and side by side at full width. */
+/* The big filled team-score blocks -- shared by the Board and History's
+ * all-time hero (History.tsx's AllTimeHero), so a team's score reads the
+ * same shape everywhere it's shown full-width. Replaced an earlier
+ * smaller, outlined .team-tile design entirely; nothing else uses that
+ * shape any more. */
 .score-blocks {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -208,15 +140,17 @@ body {
 
 .score-block-team {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 6px;
 }
 
 .score-block-logo {
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--navy-ink) 45%, transparent);
 }
 
 .score-block-name {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { declaredScore, sideLabel, sideLabelsFor, sideKeyFor } from "./sides.ts";
+import { declaredScore, sideLabel, sideLabelsFor, sideNamesFor, sideKeyFor } from "./sides.ts";
 
 /** The all-time record depends entirely on this mapping: get it wrong and
  *  a year's points land on the wrong side, or the year disappears from the
@@ -51,6 +51,11 @@ test("no labels means nothing matches, rather than everything matching", () => {
   assert.equal(sideKeyFor("FOX", null), null);
 });
 
+test("side names are a team's real name, not the upper-case label used to match it", () => {
+  assert.deepEqual(sideNamesFor(teams("Team Fox", "Team Wolf")), { RED: "Team Fox", BLUE: "Team Wolf" });
+  assert.equal(sideNamesFor(teams("Team Fox", "Team Wolf").slice(0, 1)), null);
+});
+
 /** A remembered final score, for the years that have one and no matches. */
 
 const year = (winner: string | null, w: number | null = null, l: number | null = null) => ({
@@ -81,4 +86,19 @@ test("a winner this event's teams don't match still reports the score", () => {
 test("no winner at all is no result, not a half-written one", () => {
   const labels = sideLabelsFor(teams("Team Fox", "Team Wolf"));
   assert.equal(declaredScore(year(null, 10, 7), labels), null);
+});
+
+test("passing names prints a resolved side's real team name, not its label", () => {
+  const t = teams("Team Fox", "Team Wolf");
+  const labels = sideLabelsFor(t);
+  const names = sideNamesFor(t);
+  assert.equal(declaredScore(year("FOX", 10, 7), labels, names), "Team Fox 10 – 7 Team Wolf");
+  assert.equal(declaredScore(year("FOX"), labels, names), "Team Fox won");
+});
+
+test("names is ignored for a winner the labels can't resolve", () => {
+  const t = teams("Team Fox", "Team Wolf");
+  const labels = sideLabelsFor(t);
+  const names = sideNamesFor(t);
+  assert.equal(declaredScore(year("BADGERS", 12, 5), labels, names), "BADGERS won 12–5");
 });

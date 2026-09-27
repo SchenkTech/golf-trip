@@ -201,6 +201,20 @@ the Board. Adding a photo needs the same join code and name Sign-in already
 uses for scoring, not a separate account. An admin can delete any photo,
 same three-people-not-a-mod-team scale as everything else in Admin.
 
+## Payouts — optional, on once Admin sets a line
+
+Not one of the six screens above — this one doesn't exist until an admin
+enters at least one payout line somewhere in the event (docs/DECISIONS.md
+#12), same "off until there's something to show" shape as Photos.
+
+When it's on: everyone can look, the same "reading needs nothing" rule as
+the Board. Each round's bet lines are grouped by day, showing the buy-in
+already paid out and who'd currently take it — a pot reads "not finished
+yet" until this app can actually name a winner from the group's own
+scores, and updates as more holes go in. Nothing is entered here; every
+dollar amount and every standing comes from Admin's payout lines and the
+same live net-score computation Admin used to show itself.
+
 ## Admin — in the same app, role-gated
 
 Three screens, for two or three people:
@@ -220,16 +234,15 @@ pool's payout doesn't scale by a fixed multiple of its buy-in the way
 Cup points do. Admin sets the trip's total cost and each round's bet
 lines (a label, a buy-in, a payout); the app only does the one sum it can
 vouch for — total cost minus every line's payout is what's left for the
-Cup's overall winner. Admin-only; there's no public version of this
-screen.
+Cup's overall winner.
 
-Next to a round's own bet lines, Admin also shows who's currently ahead
-for the four bets the group actually runs — front 9, back 9, and overall
-individual net leaders, and the best-ball side with the best round net —
-computed live from the same hole scores and handicaps the Cup itself
-uses, just scored stroke play instead of match play. Read-only, never
+Who's currently ahead for each line is computed live from the same hole
+scores and handicaps the Cup itself uses — front 9, back 9, and overall
+individual net leaders, and the best-ball side with the best round
+net — just scored stroke play instead of match play. Read-only, never
 stored, and not matched to a specific dollar line since a round's bet
-labels are free text.
+labels are free text. That standing shows on a public screen (below),
+not in Admin — Admin's own job here is just entering the lines.
 
 ## Sign-in
 
@@ -253,8 +266,8 @@ that loses a hole is a scoreboard nobody trusts by Saturday.
 Chat. Push notifications. Live GPS. Anything that makes the first screen
 take longer to understand. (Photo galleries and betting/side-game ledgers
 were on this list too, until docs/DECISIONS.md #11 and #12 reversed them —
-each kept narrow, off the first screen, and admin-gated rather than
-removed from the list outright.)
+each kept narrow, off the first screen, and off by default until an
+admin actually sets one up, rather than removed from the list outright.)
 
 ## Branding assets
 

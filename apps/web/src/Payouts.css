@@ -1,0 +1,76 @@
+@import "./theme.css";
+
+.payouts-page {
+  padding-bottom: 40px;
+}
+
+.payouts-round {
+  margin-top: 20px;
+}
+
+.payouts-round-header h3 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.payouts-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Same white raised bubble as .rule-card and the Board's cards. */
+.payouts-line {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.payouts-line-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.payouts-line-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.payouts-line-amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-dim);
+}
+
+.payouts-line-status {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.payouts-line-status-leading {
+  color: var(--side-blue-ink);
+  font-weight: 600;
+}
+
+.payouts-line-status-open,
+.payouts-line-status-unknown {
+  color: var(--ink-dim);
+}
+
+.payouts-remainder {
+  margin: 24px 0 0;
+  font-size: 13px;
+  color: var(--ink-dim);
+  text-align: center;
+}

@@ -92,6 +92,11 @@ export const event = sqliteTable("event", {
    *  the weekend. Meaningless when photosEnabled is false: nothing is
    *  reachable to upload into anyway. */
   photosUploadEnabled: integer("photos_upload_enabled", { mode: "boolean" }).notNull().default(false),
+  /** The whole trip's pool, in dollars -- what the group actually put in.
+   *  Null until an admin sets one (see payoutLine below for how it's
+   *  divided). Admin-only, same as payoutLine; there's no public payouts
+   *  screen (docs/DECISIONS.md #12). */
+  totalCost: real("total_cost"),
 });
 
 /** One uploaded trip photo -- only exists while event.photosEnabled has
@@ -182,6 +187,29 @@ export const round = sqliteTable("round", {
    *  same factor). Null means "scale pointsPerMatch evenly," the previous
    *  and still-default behavior (see @gc/scoring's scoreMatch). */
   segmentPoints: text("segment_points"),
+});
+
+/**
+ * One side-bet line for one round -- "Front 9", "BB Winner" -- entered by
+ * an admin, not derived: unlike the Cup's own points (docs/SCORING.md's
+ * "derive, don't store"), a real-money side pot is a fact the group agreed
+ * to, not something hole scores can compute. `payout` is the whole pot for
+ * that line, entered directly rather than computed from `cost` (real
+ * pools here don't scale by a fixed player count -- a $18.50 buy-in still
+ * pays out $111, not $18.50 times the field). Which round a bet belongs to
+ * is the round it happened in; a trip with no side bets on a given round
+ * (docs/DECISIONS.md #12: round 3 usually has none) just has no rows for
+ * that roundId, not zeroed-out ones.
+ */
+export const payoutLine = sqliteTable("payout_line", {
+  id: text("id").primaryKey(),
+  roundId: text("round_id").notNull().references(() => round.id),
+  label: text("label").notNull(),
+  /** Per-player buy-in, dollars -- shown for reference next to `payout`,
+   *  never summed into anything itself. */
+  cost: real("cost").notNull(),
+  payout: real("payout").notNull(),
+  sortOrder: integer("sort_order").notNull(),
 });
 
 // ---------------------------------------------------------------- match

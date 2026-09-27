@@ -311,10 +311,16 @@
 
 .admin-round-row {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  gap: 6px;
   padding: 8px 0;
   border-top: 1px solid var(--rule);
+}
+
+.admin-round-row-top {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .admin-round-row:first-of-type {
@@ -552,4 +558,31 @@
 .admin-select-inline {
   padding: 2px 6px;
   font-size: 12px;
+}
+
+.admin-payouts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.admin-payout-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-payout-add {
+  padding-top: 2px;
+}
+
+.admin-input-money {
+  width: 80px;
+}
+
+.admin-payout-summary-line {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ink-dim);
 }

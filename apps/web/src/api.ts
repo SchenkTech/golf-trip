@@ -187,6 +187,16 @@ export interface AdminRound {
    *  real split isn't an even scale of pointsPerMatch -- see schema.ts's
    *  note on round.segmentPoints. Null means "scale evenly." */
   segmentPoints: number[] | null;
+  /** Real-money side bets on this round, admin-entered -- see schema.ts's
+   *  note on payoutLine. Usually empty; most rounds have none. */
+  payoutLines: PayoutLine[];
+}
+
+export interface PayoutLine {
+  id: string;
+  label: string;
+  cost: number;
+  payout: number;
 }
 
 export interface AdminTeeSet {
@@ -281,6 +291,9 @@ export interface AdminEvent extends EventListItem {
   joinCode: string | null;
   photosEnabled: boolean;
   photosUploadEnabled: boolean;
+  /** The trip's whole pool, in dollars -- null until an admin sets one.
+   *  See schema.ts's note on payoutLine for how it's divided. */
+  totalCost: number | null;
 }
 
 export interface AdminAward {
@@ -456,10 +469,19 @@ export const api = {
       joinCode: string | null;
       photosEnabled: boolean;
       photosUploadEnabled: boolean;
+      totalCost: number | null;
     }>,
   ) => patch<{ ok: true }>(`/api/admin/events/${eventId}`, body),
   adminDeleteEvent: (eventId: string) => del<{ ok: true }>(`/api/admin/events/${eventId}`),
   adminActivity: (eventId: string) => get<{ activity: MatchActivity[] }>(`/api/admin/events/${eventId}/activity`),
+
+  adminCreatePayoutLine: (body: { roundId: string; label: string; cost: number; payout: number }) =>
+    post<{ ok: true; id: string }>("/api/admin/payouts", body),
+  adminUpdatePayoutLine: (lineId: string, body: Partial<{ label: string; cost: number; payout: number }>) =>
+    patch<{ ok: true }>(`/api/admin/payouts/${lineId}`, body),
+  adminMovePayoutLine: (lineId: string, direction: "up" | "down") =>
+    post<{ ok: true }>(`/api/admin/payouts/${lineId}/move`, { direction }),
+  adminDeletePayoutLine: (lineId: string) => del<{ ok: true }>(`/api/admin/payouts/${lineId}`),
 
   // Unlike photos() above, this lists everything on file regardless of
   // photosEnabled -- admin still needs to see and delete photos between

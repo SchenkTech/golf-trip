@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, AWARD_RULE_OPTIONS } from "./api.ts";
-import type { AdminAward, AdminEvent, AdminMatch, AdminRound, AdminTeeSet, EventPhoto, EventRound, MatchActivity, MatchDetail, QuickRule, TeamRoster } from "./api.ts";
+import type { AdminAward, AdminEvent, AdminMatch, AdminRound, AdminTeeSet, EventPhoto, EventRound, MatchActivity, MatchDetail, PayoutLine, QuickRule, TeamRoster } from "./api.ts";
 import { formatWeekday, formatRelativeTime } from "./lib/format.ts";
 import "./Admin.css";
 
@@ -341,6 +341,52 @@ function PhotoManager({ eventId }: { eventId: string }) {
   );
 }
 
+/** The trip's whole pool, and what's left over once every round's payout
+ *  lines (RoundRow's PayoutEditor, above) are covered -- docs/DECISIONS.md
+ *  #12: that remainder is what goes to the Cup's overall winner, not
+ *  tracked as its own row since it's arithmetic, not a fact anyone
+ *  declares. Reads "set a total to see what's left" until an admin enters
+ *  one; a trip with no side bets at all just shows $0.00 allocated. */
+function PayoutSummary({ event, rounds, onChanged }: { event: AdminEvent; rounds: AdminRound[]; onChanged: () => void }) {
+  const [totalCost, setTotalCost] = useState(event.totalCost === null ? "" : String(event.totalCost));
+
+  useEffect(() => {
+    setTotalCost(event.totalCost === null ? "" : String(event.totalCost));
+  }, [event.id, event.totalCost]);
+
+  const allocated = rounds.reduce((sum, r) => sum + r.payoutLines.reduce((s, l) => s + l.payout, 0), 0);
+  const remainder = event.totalCost === null ? null : event.totalCost - allocated;
+
+  return (
+    <section className="rules-section">
+      <h2>Payouts</h2>
+      <label className="admin-field">
+        <span>Total trip cost</span>
+        <input
+          className="admin-input admin-input-money"
+          type="number"
+          step="0.01"
+          placeholder="not set"
+          value={totalCost}
+          onChange={(e) => setTotalCost(e.target.value)}
+          onBlur={() => {
+            const trimmed = totalCost.trim();
+            const n = trimmed === "" ? null : Number(trimmed);
+            if (trimmed !== "" && !Number.isFinite(n)) return;
+            if (n !== event.totalCost) api.adminUpdateEvent(event.id, { totalCost: n }).then(onChanged);
+          }}
+        />
+      </label>
+      <p className="admin-payout-summary-line">
+        ${allocated.toFixed(2)} allocated across every round's payout lines.{" "}
+        {remainder === null
+          ? "Set a total trip cost to see what's left for the Cup winner."
+          : `$${remainder.toFixed(2)} left over goes to the winning team.`}
+      </p>
+    </section>
+  );
+}
+
 /** Editable name/dates/logo/join-code for the currently selected event --
  *  the join code (docs/DECISIONS.md #6) had no UI control at all before
  *  this; setting one meant a raw SQL update. Collapsed by default since
@@ -453,6 +499,7 @@ function RoundRow({
 
   return (
     <div className="admin-round-row">
+      <div className="admin-round-row-top">
       <div className="admin-round-fields">
         <input className="admin-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} onBlur={() => date !== round.date && api.adminUpdateRound(round.id, { date }).then(onChanged)} />
         <input
@@ -550,6 +597,113 @@ function RoundRow({
           onDeleted();
         }}
       >
+        ✕
+      </button>
+      </div>
+      <PayoutEditor roundId={round.id} lines={round.payoutLines} onChanged={onChanged} />
+    </div>
+  );
+}
+
+/** Real-money side bets for one round (docs/DECISIONS.md #12) -- label,
+ *  per-player cost, and the line's total payout, all admin-entered.
+ *  Usually empty; most rounds have no side bets at all, so this reads as
+ *  a small "add one" link rather than a form most admins ever open. */
+function PayoutEditor({ roundId, lines, onChanged }: { roundId: string; lines: PayoutLine[]; onChanged: () => void }) {
+  const [adding, setAdding] = useState(false);
+  const [label, setLabel] = useState("");
+  const [cost, setCost] = useState("");
+  const [payout, setPayout] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const addLine = async () => {
+    const costN = Number(cost);
+    const payoutN = Number(payout);
+    if (!label.trim() || !Number.isFinite(costN) || !Number.isFinite(payoutN)) return;
+    setBusy(true);
+    await api.adminCreatePayoutLine({ roundId, label: label.trim(), cost: costN, payout: payoutN });
+    setLabel("");
+    setCost("");
+    setPayout("");
+    setAdding(false);
+    setBusy(false);
+    onChanged();
+  };
+
+  return (
+    <div className="admin-payouts">
+      {lines.map((line, i) => (
+        <PayoutLineRow key={line.id} line={line} isFirst={i === 0} isLast={i === lines.length - 1} onChanged={onChanged} />
+      ))}
+      {adding ? (
+        <div className="admin-payout-row admin-payout-add">
+          <input className="admin-input" placeholder="Label -- Front 9, BB Winner" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <input className="admin-input admin-input-money" type="number" step="0.01" placeholder="Cost" value={cost} onChange={(e) => setCost(e.target.value)} />
+          <input className="admin-input admin-input-money" type="number" step="0.01" placeholder="Payout" value={payout} onChange={(e) => setPayout(e.target.value)} />
+          <button className="admin-text-btn" type="button" disabled={busy} onClick={addLine}>
+            Add
+          </button>
+          <button className="admin-text-btn" type="button" onClick={() => setAdding(false)}>
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button className="admin-text-btn" type="button" onClick={() => setAdding(true)}>
+          + Payout line
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PayoutLineRow({ line, isFirst, isLast, onChanged }: { line: PayoutLine; isFirst: boolean; isLast: boolean; onChanged: () => void }) {
+  const [label, setLabel] = useState(line.label);
+  const [cost, setCost] = useState(String(line.cost));
+  const [payout, setPayout] = useState(String(line.payout));
+
+  useEffect(() => {
+    setLabel(line.label);
+    setCost(String(line.cost));
+    setPayout(String(line.payout));
+  }, [line.id, line.label, line.cost, line.payout]);
+
+  return (
+    <div className="admin-payout-row">
+      <input
+        className="admin-input"
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        onBlur={() => label.trim() && label !== line.label && api.adminUpdatePayoutLine(line.id, { label: label.trim() }).then(onChanged)}
+      />
+      <input
+        className="admin-input admin-input-money"
+        type="number"
+        step="0.01"
+        value={cost}
+        onChange={(e) => setCost(e.target.value)}
+        onBlur={() => {
+          const n = Number(cost);
+          if (Number.isFinite(n) && n !== line.cost) api.adminUpdatePayoutLine(line.id, { cost: n }).then(onChanged);
+        }}
+      />
+      <input
+        className="admin-input admin-input-money"
+        type="number"
+        step="0.01"
+        value={payout}
+        onChange={(e) => setPayout(e.target.value)}
+        onBlur={() => {
+          const n = Number(payout);
+          if (Number.isFinite(n) && n !== line.payout) api.adminUpdatePayoutLine(line.id, { payout: n }).then(onChanged);
+        }}
+      />
+      <button className="admin-icon-btn" title="Move up" disabled={isFirst} onClick={() => api.adminMovePayoutLine(line.id, "up").then(onChanged)}>
+        ↑
+      </button>
+      <button className="admin-icon-btn" title="Move down" disabled={isLast} onClick={() => api.adminMovePayoutLine(line.id, "down").then(onChanged)}>
+        ↓
+      </button>
+      <button className="admin-icon-btn admin-icon-danger" title="Delete" onClick={() => api.adminDeletePayoutLine(line.id).then(onChanged)}>
         ✕
       </button>
     </div>
@@ -1526,6 +1680,11 @@ export default function Admin() {
           <p className="loading">Loading…</p>
         )}
       </section>
+
+      {(() => {
+        const current = events.find((e) => e.id === eventId);
+        return current && rounds && <PayoutSummary event={current} rounds={rounds} onChanged={loadEvents} />;
+      })()}
 
       {rounds && teams.length === 2 && (
         <MatchupsSection rounds={rounds} teams={teams} matchesByRound={matchesByRound} onChanged={load} />

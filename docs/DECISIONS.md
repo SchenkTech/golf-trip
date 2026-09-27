@@ -163,6 +163,43 @@ Uploading (not viewing) needs the same join code plus a name
 docs/DECISIONS.md #6 already uses for scoring, reusing the same device
 identity — no separate photos-specific auth to build or explain.
 
+## 12. Payouts are declared, not derived — and admin-only
+
+docs/SPEC.md's "explicitly out of scope" list also named "betting or
+side-game ledgers." Reversed the same way #11 reversed photo galleries —
+narrowly, with an admin-only switch — rather than dropped from the list:
+this app still doesn't grow a public money screen just because one
+group wanted an admin tool.
+
+**Why declared, not derived.** Everywhere else in this app the rule is
+docs/SCORING.md's "derive, don't store" — a standing, a point total, a
+win-loss record is always computed fresh from hole scores, never typed
+in. Side-bet payouts break that rule on purpose. A real pool's payout
+doesn't scale by a fixed multiple of its buy-in — the group's own numbers
+have a $2.25 buy-in paying $31.50 (14×, the whole field) sitting next to
+an $18.50 buy-in paying $111 (6×, a smaller pot) on the same round — so
+there is no formula to derive `payout` from `cost` and a player count.
+Worse, *who won* a given side bet (front 9, back 9, best-ball) is a
+question about a real-money side agreement the group made, not
+necessarily the same thing the Cup's own front-9/back-9 segment winner
+computes to. Rather than guess at rules nobody stated and risk attaching
+real money to the wrong side, both `cost` and `payout` are plain numbers
+an admin types in per line, and the app only ever does the one piece of
+arithmetic it can vouch for: `total trip cost − sum of every round's
+payout lines = what's left for the Cup's overall winner`.
+
+**Why admin-only, not public.** Unlike the Cup's own score, a pool's cost
+structure is closer to bookkeeping than to something everyone needs
+propped on a phone. Kept inside Admin (`routes/admin.ts`'s `/payouts`
+endpoints, `requireAdmin`-gated same as everything else there) rather
+than adding a new public screen — if the group wants players to see the
+breakdown too, that's a real ask to come back to, not a default to ship
+speculatively.
+
+Rounds with no side bets (most trips, most rounds) just have no
+`payoutLine` rows — an empty section in Admin, not a set of zeroed-out
+ones.
+
 ---
 
 ## Open

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getCookie } from "hono/cookie";
 import { env } from "hono/adapter";
 import { pointsAvailable } from "@gc/scoring";
@@ -210,6 +210,22 @@ admin.get("/rounds/:eventId", async (c) => {
   });
   rows.sort((a, b) => a.date.localeCompare(b.date));
 
+  const payoutRows =
+    rows.length === 0
+      ? []
+      : await db.query.payoutLine.findMany({
+          where: inArray(
+            schema.payoutLine.roundId,
+            rows.map((r) => r.id),
+          ),
+        });
+  const payoutsByRound = new Map<string, typeof payoutRows>();
+  for (const p of payoutRows) {
+    const list = payoutsByRound.get(p.roundId) ?? [];
+    list.push(p);
+    payoutsByRound.set(p.roundId, list);
+  }
+
   return c.json({
     rounds: rows.map((r) => ({
       id: r.id,
@@ -223,6 +239,12 @@ admin.get("/rounds/:eventId", async (c) => {
       pointsPerMatch: r.pointsPerMatch,
       defaultPointsPerMatch: pointsAvailable(r.scoringFormat as ScoringFormat),
       segmentPoints: segmentPointsFor(r.segmentPoints),
+      // Real-money side bets for this round (docs/DECISIONS.md #12) --
+      // most rounds have none, so this is usually an empty array, not a
+      // separate fetch the Payouts editor has to make per round.
+      payoutLines: (payoutsByRound.get(r.id) ?? [])
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((p) => ({ id: p.id, label: p.label, cost: p.cost, payout: p.payout })),
     })),
   });
 });
@@ -405,6 +427,7 @@ admin.get("/events", async (c) => {
       joinCode: e.joinCode,
       photosEnabled: e.photosEnabled,
       photosUploadEnabled: e.photosUploadEnabled,
+      totalCost: e.totalCost,
     })),
   });
 });
@@ -605,6 +628,7 @@ admin.patch("/events/:eventId", async (c) => {
     joinCode?: string | null;
     photosEnabled?: boolean;
     photosUploadEnabled?: boolean;
+    totalCost?: number | null;
   }>();
 
   const existing = await db.query.event.findFirst({ where: eq(schema.event.id, eventId) });
@@ -620,6 +644,7 @@ admin.patch("/events/:eventId", async (c) => {
       ...(body.joinCode !== undefined ? { joinCode: body.joinCode?.trim() || null } : {}),
       ...(body.photosEnabled !== undefined ? { photosEnabled: body.photosEnabled } : {}),
       ...(body.photosUploadEnabled !== undefined ? { photosUploadEnabled: body.photosUploadEnabled } : {}),
+      ...(body.totalCost !== undefined ? { totalCost: body.totalCost } : {}),
     })
     .where(eq(schema.event.id, eventId));
 
@@ -662,6 +687,101 @@ admin.delete("/events/:eventId/photos/:photoId", async (c) => {
 
   if (bucket) await bucket.delete(row.r2Key);
   await db.delete(schema.eventPhoto).where(eq(schema.eventPhoto.id, photoId));
+
+  return c.json({ ok: true });
+});
+
+// -------------------------------------------------------------- payouts
+
+/** A new side-bet line on a round -- appended after whatever's already
+ *  there, same "no position up front, reorder with the buttons afterward"
+ *  pattern as quick rules (below). `cost` and `payout` are both admin-
+ *  entered dollars, not derived from each other (docs/DECISIONS.md #12 on
+ *  why: a real pool's payout doesn't scale by a fixed multiple of its
+ *  buy-in). */
+admin.post("/payouts", async (c) => {
+  const db = c.get("db");
+  const body = await c.req.json<{ roundId: string; label: string; cost: number; payout: number }>();
+
+  if (!body?.roundId) return c.json({ error: "roundId required" }, 400);
+  if (!body?.label?.trim()) return c.json({ error: "label required" }, 400);
+  if (!Number.isFinite(body.cost) || !Number.isFinite(body.payout)) {
+    return c.json({ error: "cost and payout must be numbers" }, 400);
+  }
+
+  const round = await db.query.round.findFirst({ where: eq(schema.round.id, body.roundId) });
+  if (!round) return c.json({ error: "round not found" }, 404);
+
+  const existing = await db.query.payoutLine.findMany({ where: eq(schema.payoutLine.roundId, body.roundId) });
+  const nextOrder = existing.length === 0 ? 1 : Math.max(...existing.map((p) => p.sortOrder)) + 1;
+
+  const id = crypto.randomUUID();
+  await db.insert(schema.payoutLine).values({
+    id,
+    roundId: body.roundId,
+    label: body.label.trim(),
+    cost: body.cost,
+    payout: body.payout,
+    sortOrder: nextOrder,
+  });
+
+  return c.json({ ok: true, id });
+});
+
+admin.patch("/payouts/:lineId", async (c) => {
+  const db = c.get("db");
+  const lineId = c.req.param("lineId");
+  const body = await c.req.json<{ label?: string; cost?: number; payout?: number }>();
+
+  const existing = await db.query.payoutLine.findFirst({ where: eq(schema.payoutLine.id, lineId) });
+  if (!existing) return c.json({ error: "payout line not found" }, 404);
+
+  await db
+    .update(schema.payoutLine)
+    .set({
+      ...(body.label !== undefined ? { label: body.label.trim() } : {}),
+      ...(body.cost !== undefined ? { cost: body.cost } : {}),
+      ...(body.payout !== undefined ? { payout: body.payout } : {}),
+    })
+    .where(eq(schema.payoutLine.id, lineId));
+
+  return c.json({ ok: true });
+});
+
+/** Swaps this line's position with its immediate neighbor *within the same
+ *  round* -- sortOrder isn't unique across rounds (each round's list
+ *  starts its own count at 1, same as quick rules' single list), so the
+ *  neighbor search is scoped to roundId, not global. */
+admin.post("/payouts/:lineId/move", async (c) => {
+  const db = c.get("db");
+  const lineId = c.req.param("lineId");
+  const body = await c.req.json<{ direction: "up" | "down" }>();
+
+  const line = await db.query.payoutLine.findFirst({ where: eq(schema.payoutLine.id, lineId) });
+  if (!line) return c.json({ error: "payout line not found" }, 404);
+
+  const siblings = await db.query.payoutLine.findMany({ where: eq(schema.payoutLine.roundId, line.roundId) });
+  siblings.sort((a, b) => a.sortOrder - b.sortOrder);
+  const i = siblings.findIndex((p) => p.id === lineId);
+  const j = body.direction === "up" ? i - 1 : i + 1;
+  if (j < 0 || j >= siblings.length) return c.json({ ok: true }); // already at an end
+
+  await db.batch([
+    db.update(schema.payoutLine).set({ sortOrder: siblings[j].sortOrder }).where(eq(schema.payoutLine.id, siblings[i].id)),
+    db.update(schema.payoutLine).set({ sortOrder: siblings[i].sortOrder }).where(eq(schema.payoutLine.id, siblings[j].id)),
+  ]);
+
+  return c.json({ ok: true });
+});
+
+admin.delete("/payouts/:lineId", async (c) => {
+  const db = c.get("db");
+  const lineId = c.req.param("lineId");
+
+  const existing = await db.query.payoutLine.findFirst({ where: eq(schema.payoutLine.id, lineId) });
+  if (!existing) return c.json({ error: "payout line not found" }, 404);
+
+  await db.delete(schema.payoutLine).where(eq(schema.payoutLine.id, lineId));
 
   return c.json({ ok: true });
 });

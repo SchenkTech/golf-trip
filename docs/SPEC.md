@@ -208,6 +208,15 @@ doubles the deployment for three screens. Keeping the old one means the data
 lives in its database while this app reads from another — two schemas and a
 sync problem forever, and the setup friction that got us here in the first place.
 
+**Built:** a fourth, optional piece — payouts (docs/DECISIONS.md #12).
+Real-money side bets, entered per round rather than computed, since a
+pool's payout doesn't scale by a fixed multiple of its buy-in the way
+Cup points do. Admin sets the trip's total cost and each round's bet
+lines (a label, a buy-in, a payout); the app only does the one sum it can
+vouch for — total cost minus every line's payout is what's left for the
+Cup's overall winner. Admin-only; there's no public version of this
+screen.
+
 ## Sign-in
 
 Calibrated to twelve friends once a year, not to a SaaS.
@@ -227,10 +236,11 @@ that loses a hole is a scoreboard nobody trusts by Saturday.
 
 ## Explicitly out of scope
 
-Chat. Betting or side-game ledgers. Push notifications. Live GPS. Anything
-that makes the first screen take longer to understand. (Photo galleries
-were on this list too, until docs/DECISIONS.md #11 reversed it — kept
-narrow and off by default rather than removed from the list outright.)
+Chat. Push notifications. Live GPS. Anything that makes the first screen
+take longer to understand. (Photo galleries and betting/side-game ledgers
+were on this list too, until docs/DECISIONS.md #11 and #12 reversed them —
+each kept narrow, off the first screen, and admin-gated rather than
+removed from the list outright.)
 
 ## Branding assets
 

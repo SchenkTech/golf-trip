@@ -10,13 +10,11 @@ import type {
   EventRound,
   MatchActivity,
   MatchDetail,
-  NetLeaderGroup,
-  PayoutLeaders,
   PayoutLine,
   QuickRule,
   TeamRoster,
 } from "./api.ts";
-import { formatWeekday, formatRelativeTime } from "./lib/format.ts";
+import { formatWeekday, formatRelativeTime, formatMoney } from "./lib/format.ts";
 import { downscaleImage } from "./lib/image.ts";
 import "./Admin.css";
 
@@ -400,7 +398,10 @@ function PhotoManager({ eventId }: { eventId: string }) {
  *  #12: that remainder is what goes to the Cup's overall winner, not
  *  tracked as its own row since it's arithmetic, not a fact anyone
  *  declares. Reads "set a total to see what's left" until an admin enters
- *  one; a trip with no side bets at all just shows $0.00 allocated. */
+ *  one; a trip with no side bets at all just shows $0.00 allocated. Setting
+ *  a payout line anywhere is also what turns on Payouts.tsx, the public
+ *  screen players see -- this is entry, not the only place any of it
+ *  shows up. */
 function PayoutSummary({ event, rounds, onChanged }: { event: AdminEvent; rounds: AdminRound[]; onChanged: () => void }) {
   const [totalCost, setTotalCost] = useState(event.totalCost === null ? "" : String(event.totalCost));
 
@@ -432,10 +433,8 @@ function PayoutSummary({ event, rounds, onChanged }: { event: AdminEvent; rounds
         />
       </label>
       <p className="admin-payout-summary-line">
-        ${allocated.toFixed(2)} allocated across every round's payout lines.{" "}
-        {remainder === null
-          ? "Set a total trip cost to see what's left for the Cup winner."
-          : `$${remainder.toFixed(2)} left over goes to the winning team.`}
+        {formatMoney(allocated)} allocated across every round's payout lines.{" "}
+        {remainder === null ? "Set a total trip cost to see what's left for the Cup winner." : `${formatMoney(remainder)} left over goes to the winning team.`}
       </p>
     </section>
   );
@@ -659,49 +658,12 @@ function RoundRow({
   );
 }
 
-/** Who'd currently take each of the round's usual net-score pots -- front
- *  9 / back 9 / overall (best individual net across the whole round,
- *  regardless of which match someone's in) and best ball (best round-net
- *  side across every match). Computed fresh server-side every time this
- *  mounts (lib/payoutLeaders.ts); nothing here is stored, and it's never
- *  matched to a specific payout line above since those are free text and
- *  might not even be these four bets. Only shown once a round actually
- *  has payout lines, so a normal side-bet-free round doesn't pay for the
- *  fetch. */
-function PayoutLeadersInfo({ roundId }: { roundId: string }) {
-  const [leaders, setLeaders] = useState<PayoutLeaders | null>(null);
-
-  useEffect(() => {
-    api.adminPayoutLeaders(roundId).then(setLeaders).catch(() => setLeaders(null));
-  }, [roundId]);
-
-  if (!leaders) return null;
-
-  const individualLine = (label: string, group: NetLeaderGroup | null) =>
-    group ? `${label}: ${group.leaders.map((p) => p.name).join(" & ")} (net ${group.net})` : `${label}: nobody's finished it yet`;
-
-  const bestBallLine = leaders.bestBall
-    ? `Best ball: ${leaders.bestBall.leaders.map((s) => s.players.map((p) => p.name).join(" & ")).join(" / ")} (net ${leaders.bestBall.net})`
-    : "Best ball: nobody's finished a full 18 yet";
-
-  return (
-    <div className="admin-payout-leaders">
-      <p className="admin-payout-leaders-title">Net leaders right now -- not the Cup score, see docs/DECISIONS.md #12:</p>
-      <ul className="admin-payout-leaders-list">
-        <li>{individualLine("Front 9", leaders.front9)}</li>
-        <li>{individualLine("Back 9", leaders.back9)}</li>
-        <li>{individualLine("Overall", leaders.overall)}</li>
-        <li>{bestBallLine}</li>
-      </ul>
-    </div>
-  );
-}
-
-/** A starting point for the four bets docs/DECISIONS.md #12's leader panel
- *  knows how to read -- the group's own numbers, not a guess: $2.25 a
- *  head into a $31.50 front-nine/back-nine pot (14 players), $18.50 into
- *  a $111 best-ball pot (6 sides in a 3-match round). "+ Add the usual
- *  bets" below inserts these once, editable/deletable afterward same as
+/** A starting point for the four bets Payouts.tsx (the public screen) and
+ *  routes/events.ts's canonicalBetFor know how to read a live standing
+ *  for -- the group's own numbers, not a guess: $2.25 a head into a
+ *  $31.50 front-nine/back-nine pot (14 players), $18.50 into a $111
+ *  best-ball pot (6 sides in a 3-match round). "+ Add the usual bets"
+ *  below inserts these once, editable/deletable afterward same as
  *  anything typed in by hand -- this is a starting point, not a locked
  *  template, and a round that runs different bets just doesn't use it. */
 const DEFAULT_PAYOUT_LINES = [
@@ -750,7 +712,6 @@ function PayoutEditor({ roundId, lines, onChanged }: { roundId: string; lines: P
       {lines.map((line, i) => (
         <PayoutLineRow key={line.id} line={line} isFirst={i === 0} isLast={i === lines.length - 1} onChanged={onChanged} />
       ))}
-      {lines.length > 0 && <PayoutLeadersInfo roundId={roundId} />}
       {adding ? (
         <div className="admin-payout-row admin-payout-add">
           <input className="admin-input" placeholder="Label -- Front 9, BB Winner" value={label} onChange={(e) => setLabel(e.target.value)} />

@@ -163,13 +163,12 @@ Uploading (not viewing) needs the same join code plus a name
 docs/DECISIONS.md #6 already uses for scoring, reusing the same device
 identity — no separate photos-specific auth to build or explain.
 
-## 12. Payouts are declared, not derived — and admin-only
+## 12. Payouts are declared, not derived — public, read-only
 
 docs/SPEC.md's "explicitly out of scope" list also named "betting or
 side-game ledgers." Reversed the same way #11 reversed photo galleries —
-narrowly, with an admin-only switch — rather than dropped from the list:
-this app still doesn't grow a public money screen just because one
-group wanted an admin tool.
+narrowly, with a switch that only appears once there's something to
+show — rather than dropped from the list.
 
 **Why declared, not derived.** Everywhere else in this app the rule is
 docs/SCORING.md's "derive, don't store" — a standing, a point total, a
@@ -202,24 +201,35 @@ against the group's own tie rule (split evenly) before building.
 
 This doesn't change the paragraph above: `cost` and `payout` (the dollar
 amounts) are still declared, because there's still no formula from a
-buy-in to a pot size. What's derived now is *who's leading* each of
-those four specific pots — shown read-only in Admin next to a round's
-payout lines, recomputed fresh on every load, never stored, and never
-assumed to be the only bets a group might set up (a payout line's label
-is still free text; this only knows how to answer for these four,
-specifically-confirmed shapes).
+buy-in to a pot size. What's derived is *who's leading* each of those
+four specific pots — recomputed fresh on every load, never stored, and
+never assumed to be the only bets a group might set up (a payout line's
+label is still free text; this only knows how to answer for these four,
+specifically-confirmed shapes, via `canonicalBetFor`'s fuzzy match on
+the label).
 
-**Why admin-only, not public.** Unlike the Cup's own score, a pool's cost
-structure is closer to bookkeeping than to something everyone needs
-propped on a phone. Kept inside Admin (`routes/admin.ts`'s `/payouts`
-endpoints, `requireAdmin`-gated same as everything else there) rather
-than adding a new public screen — if the group wants players to see the
-breakdown too, that's a real ask to come back to, not a default to ship
-speculatively.
+**Public after all, once a second group actually wanted it.** Shipped
+admin-only at first: a pool's cost structure reads closer to
+bookkeeping than to something everyone needs propped on a phone, and
+this app doesn't grow a public money screen just because one group
+wanted an admin tool. Reversed once a second group's own build made the
+counter-case concrete — their version *was* just a public list of bets
+and winners, no setup screen at all, and the person running it said so
+directly: this app's admin-only version was doing the same job with
+more to manage. The setup half was never optional (a pool needs buy-ins
+entered by someone), so the fix isn't "less setup," it's a second,
+public window onto the same data Admin already computes:
+`GET /:id/payouts` (`routes/events.ts`, reusing `loadPayoutLeaders`)
+behind `event.hasPayouts` — true once any round has a payoutLine row,
+same "doesn't exist until there's something to show" gate #11's
+`photosEnabled` uses. Admin's own leader panel was then just a second
+copy of the same read and came out entirely; Admin keeps only the
+entry form (`PayoutEditor`, `PayoutSummary`), and the public Payouts
+screen is the one place any of it displays.
 
 Rounds with no side bets (most trips, most rounds) just have no
 `payoutLine` rows — an empty section in Admin, not a set of zeroed-out
-ones.
+ones, and the public screen doesn't exist for that event at all.
 
 ## 13. Player photos: self-service, on the same trust the roster already runs on
 

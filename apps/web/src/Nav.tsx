@@ -35,8 +35,9 @@ export default function Nav() {
           // A past trip (`/trips/2026`) is the Matches screen with its trip
           // picker pointed elsewhere, so that tab stays lit while you're in
           // one -- otherwise picking last year appears to leave the section.
-          // More stays lit for both screens behind it (Rules, Admin), so
-          // leaving Rules for Admin doesn't read as leaving the section.
+          // More stays lit for every screen behind it (Rules, Admin, Photos,
+          // Payouts), so leaving one for another doesn't read as leaving
+          // the section.
           const active =
             to === "/"
               ? path === "/"
@@ -46,7 +47,8 @@ export default function Nav() {
                   ? path.startsWith("/more") ||
                     path.startsWith("/rules") ||
                     path.startsWith("/admin") ||
-                    path.startsWith("/photos")
+                    path.startsWith("/photos") ||
+                    path.startsWith("/payouts")
                   : path.startsWith(to);
           return (
             <Link key={to} to={to} className={`bottom-nav-link ${active ? "active" : ""}`}>

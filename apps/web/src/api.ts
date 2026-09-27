@@ -51,6 +51,11 @@ export interface EventSummary {
    *  while new uploads are closed outside the trip itself. Meaningless
    *  when photosEnabled is false. */
   photosUploadEnabled: boolean;
+  /** Whether Payouts.tsx and its More-menu link are reachable at all right
+   *  now -- true once an admin has entered at least one payout line
+   *  anywhere this event (Admin's Payouts section), same shape as
+   *  photosEnabled. */
+  hasPayouts: boolean;
 }
 
 export interface ScoredMatchPlayer {
@@ -164,6 +169,33 @@ export interface EventPhoto {
   createdAt: number;
 }
 
+export interface PublicPayoutLine {
+  id: string;
+  label: string;
+  payout: number;
+  /** "leading" -- leaderNames names who'd take this pot right now.
+   *  "open" -- a bet this app knows how to read, nobody's finished it yet.
+   *  "unknown" -- a custom line whose label didn't match one of the four
+   *  bets Admin's leader panel computes (see routes/events.ts's
+   *  canonicalBetFor); the dollar amount is still real, there's just no
+   *  live standing to show for it. */
+  status: "leading" | "open" | "unknown";
+  leaderNames: string[] | null;
+}
+
+export interface PublicPayoutRound {
+  roundId: string;
+  date: string;
+  lines: PublicPayoutLine[];
+}
+
+export interface PublicPayouts {
+  totalCost: number | null;
+  allocated: number;
+  remainder: number | null;
+  rounds: PublicPayoutRound[];
+}
+
 export interface TeamRoster {
   id: string;
   name: string;
@@ -203,33 +235,6 @@ export interface PayoutLine {
   payout: number;
 }
 
-export interface NamedPlayer {
-  playerId: string;
-  name: string;
-}
-
-export interface NetLeaderGroup {
-  net: number;
-  leaders: NamedPlayer[];
-}
-
-export interface BestBallLeaderGroup {
-  net: number;
-  leaders: { matchId: string; side: "RED" | "BLUE"; players: NamedPlayer[] }[];
-}
-
-/** Who's currently leading each of a round's usual net-score pots --
- *  read-only, computed fresh server-side (apps/api's lib/payoutLeaders.ts)
- *  every time this is fetched, never attached to a specific PayoutLine
- *  since a round's own payout lines are free text (docs/DECISIONS.md
- *  #12). Any of the four can be null -- nobody's finished that stretch,
- *  or no matches exist on the round yet. */
-export interface PayoutLeaders {
-  front9: NetLeaderGroup | null;
-  back9: NetLeaderGroup | null;
-  overall: NetLeaderGroup | null;
-  bestBall: BestBallLeaderGroup | null;
-}
 
 export interface AdminTeeSet {
   id: string;
@@ -427,6 +432,7 @@ export const api = {
     post<{ ok: boolean }>(`/api/events/${eventId}/verify-code`, { code }),
 
   photos: (eventId: string) => get<{ photos: EventPhoto[] }>(`/api/events/${eventId}/photos`),
+  payouts: (eventId: string) => get<PublicPayouts>(`/api/events/${eventId}/payouts`),
   // multipart/form-data, not JSON -- an upload gets its own fetch instead
   // of post()'s JSON.stringify body. Same shape as uploadPlayerPhoto below.
   uploadPhoto: async (eventId: string, file: File, uploadedByName: string | null, code: string | null) => {
@@ -523,7 +529,6 @@ export const api = {
   adminMovePayoutLine: (lineId: string, direction: "up" | "down") =>
     post<{ ok: true }>(`/api/admin/payouts/${lineId}/move`, { direction }),
   adminDeletePayoutLine: (lineId: string) => del<{ ok: true }>(`/api/admin/payouts/${lineId}`),
-  adminPayoutLeaders: (roundId: string) => get<PayoutLeaders>(`/api/admin/rounds/${roundId}/payout-leaders`),
 
   // Unlike photos() above, this lists everything on file regardless of
   // photosEnabled -- admin still needs to see and delete photos between

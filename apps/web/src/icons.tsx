@@ -84,6 +84,15 @@ export function IconPhotos() {
   );
 }
 
+export function IconPayouts() {
+  return (
+    <svg {...iconProps()}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 7v10M9.5 9.5c0-1.4 1.1-2.5 2.5-2.5s2.5.9 2.5 2.1c0 3-5 1.6-5 4.5 0 1.2 1.1 2.1 2.5 2.1s2.5-1.1 2.5-2.5" />
+    </svg>
+  );
+}
+
 export function IconChevron() {
   return (
     <svg {...iconProps()} width={18} height={18}>

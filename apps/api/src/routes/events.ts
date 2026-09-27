@@ -1,13 +1,14 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { env } from "hono/adapter";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { pointsAvailable } from "@gc/scoring";
 import type { ScoringFormat, TeamFormat } from "@gc/scoring";
 import { scoreMatchRows, strokeIndexesFor, segmentPointsFor, PERSONAL_CARD_FORMATS } from "../lib/score.ts";
 import { loadPlayerLabels, loadPlayerPhotoUrls } from "../lib/players.ts";
 import { loadPlayerRecords } from "../lib/records.ts";
 import { isAwardRule, resolveAward } from "../lib/awards.ts";
+import { loadPayoutLeaders } from "../lib/payoutLeaders.ts";
 import type { AwardContext } from "../lib/awards.ts";
 import * as schema from "../db/schema.ts";
 import type { AppEnv } from "../types.ts";
@@ -216,6 +217,18 @@ async function eventDetail(c: Context<AppEnv>, eventId: string) {
     // these are two switches, not one.
     photosEnabled: event.photosEnabled,
     photosUploadEnabled: event.photosUploadEnabled,
+    // Whether the public Payouts screen (and the More menu's link to it)
+    // exists at all right now -- true once an admin has entered at least
+    // one payoutLine anywhere this event, same "doesn't exist until
+    // there's something to show" shape as photosEnabled.
+    hasPayouts:
+      roundRows.length > 0 &&
+      (await db.query.payoutLine.findFirst({
+        where: inArray(
+          schema.payoutLine.roundId,
+          roundRows.map((r) => r.id),
+        ),
+      })) !== undefined,
     teams: teams.map((t) => ({
       id: t.id,
       name: t.name,
@@ -340,6 +353,109 @@ events.get("/:id/teams", async (c) => {
   });
 
   return c.json({ eventId, teams: out });
+});
+
+// ------------------------------------------------------------ payouts
+
+/** Which of the four bets lib/payoutLeaders.ts knows how to read a
+ *  round's own scores for, from a payoutLine's free-text label -- an
+ *  admin can call a line anything ("BB Winner", "Best Ball", "Skins"),
+ *  and most of what they'll actually type matches one of these four
+ *  loosely. A label that matches none of them still gets shown (the
+ *  dollar amount is real either way), just with no live standing --
+ *  there's no way to compute a bet this app was never told the shape
+ *  of. */
+function canonicalBetFor(label: string): "front9" | "back9" | "overall" | "bestBall" | null {
+  const l = label.trim().toLowerCase();
+  if (/front.?9|front nine/.test(l)) return "front9";
+  if (/back.?9|back nine/.test(l)) return "back9";
+  if (/overall|18/.test(l)) return "overall";
+  if (/best.?ball|\bbb\b/.test(l)) return "bestBall";
+  return null;
+}
+
+/** Every round's real-money side bets, for the public Payouts screen
+ *  (docs/DECISIONS.md #12 -- reversed to add this after all, see the
+ *  entry's own follow-up note) -- who's leading each one right now,
+ *  computed live from the same scores the Cup itself uses, same as
+ *  Admin's identical panel. Only reachable at all once the event has at
+ *  least one payoutLine somewhere; an event with none configured 404s,
+ *  the same "doesn't exist until there's something to show" shape
+ *  event.photosEnabled uses for the album. */
+events.get("/:id/payouts", async (c) => {
+  const db = c.get("db");
+  const eventId = c.req.param("id");
+
+  const event = await db.query.event.findFirst({ where: eq(schema.event.id, eventId) });
+  if (!event) return c.json({ error: "event not found" }, 404);
+
+  const rounds = await db.query.round.findMany({ where: eq(schema.round.eventId, eventId) });
+  rounds.sort((a, b) => a.date.localeCompare(b.date));
+  if (rounds.length === 0) return c.json({ error: "no payouts for this event" }, 404);
+
+  const lineRows = await db.query.payoutLine.findMany({
+    where: inArray(
+      schema.payoutLine.roundId,
+      rounds.map((r) => r.id),
+    ),
+  });
+  if (lineRows.length === 0) return c.json({ error: "no payouts for this event" }, 404);
+
+  const linesByRound = new Map<string, typeof lineRows>();
+  for (const l of lineRows) {
+    const list = linesByRound.get(l.roundId) ?? [];
+    list.push(l);
+    linesByRound.set(l.roundId, list);
+  }
+
+  const roundsOut = await Promise.all(
+    rounds
+      .filter((r) => (linesByRound.get(r.id)?.length ?? 0) > 0)
+      .map(async (r) => {
+        const leaders = await loadPayoutLeaders(db, r.id);
+        const lines = (linesByRound.get(r.id) ?? []).sort((a, b) => a.sortOrder - b.sortOrder);
+        return {
+          roundId: r.id,
+          date: r.date,
+          lines: lines.map((l) => {
+            const bet = canonicalBetFor(l.label);
+            // "leading" once someone has a real net to show, "unknown" for
+            // a bet this app can't read the group's own scores for (a
+            // custom line), "open" otherwise -- see docs/DECISIONS.md #12
+            // on why a pot only ever names who's ahead, not stored
+            // separately from the same computation Admin already shows.
+            let status: "unknown" | "open" | "leading" = "unknown";
+            let leaderNames: string[] | null = null;
+            if (bet === "bestBall") {
+              if (leaders.bestBall) {
+                status = "leading";
+                leaderNames = leaders.bestBall.leaders.map((side) => side.players.map((p) => p.name).join(" & "));
+              } else {
+                status = "open";
+              }
+            } else if (bet) {
+              const group = leaders[bet];
+              if (group) {
+                status = "leading";
+                leaderNames = group.leaders.map((p) => p.name);
+              } else {
+                status = "open";
+              }
+            }
+            return { id: l.id, label: l.label, payout: l.payout, status, leaderNames };
+          }),
+        };
+      }),
+  );
+
+  const allocated = lineRows.reduce((sum, l) => sum + l.payout, 0);
+
+  return c.json({
+    totalCost: event.totalCost,
+    allocated,
+    remainder: event.totalCost === null ? null : event.totalCost - allocated,
+    rounds: roundsOut,
+  });
 });
 
 // ------------------------------------------------------------- photos

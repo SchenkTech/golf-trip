@@ -7,6 +7,13 @@ export function formatPoints(n: number): string {
   return String(Number(n.toFixed(2)));
 }
 
+/** A dollar amount, always to the cent -- $31.50, not $31.5, since real
+ *  money reads wrong with a dropped trailing zero the way formatPoints
+ *  above deliberately drops one. */
+export function formatMoney(n: number): string {
+  return `$${n.toFixed(2)}`;
+}
+
 /** The trip's name without the bits that only identify one year of it:
  *  a leading ordinal ("4th Annual") and a trailing year. Every event is
  *  named for its own edition -- 4th Annual, 3rd Annual -- so the ordinal

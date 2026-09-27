@@ -658,6 +658,20 @@ function PayoutLeadersInfo({ roundId }: { roundId: string }) {
   );
 }
 
+/** A starting point for the four bets docs/DECISIONS.md #12's leader panel
+ *  knows how to read -- the group's own numbers, not a guess: $2.25 a
+ *  head into a $31.50 front-nine/back-nine pot (14 players), $18.50 into
+ *  a $111 best-ball pot (6 sides in a 3-match round). "+ Add the usual
+ *  bets" below inserts these once, editable/deletable afterward same as
+ *  anything typed in by hand -- this is a starting point, not a locked
+ *  template, and a round that runs different bets just doesn't use it. */
+const DEFAULT_PAYOUT_LINES = [
+  { label: "Front 9", cost: 2.25, payout: 31.5 },
+  { label: "Back 9", cost: 2.25, payout: 31.5 },
+  { label: "Overall 18", cost: 0, payout: 0 },
+  { label: "BB Winner", cost: 18.5, payout: 111 },
+];
+
 /** Real-money side bets for one round (docs/DECISIONS.md #12) -- label,
  *  per-player cost, and the line's total payout, all admin-entered.
  *  Usually empty; most rounds have no side bets at all, so this reads as
@@ -683,6 +697,15 @@ function PayoutEditor({ roundId, lines, onChanged }: { roundId: string; lines: P
     onChanged();
   };
 
+  const addDefaults = async () => {
+    setBusy(true);
+    for (const line of DEFAULT_PAYOUT_LINES) {
+      await api.adminCreatePayoutLine({ roundId, ...line });
+    }
+    setBusy(false);
+    onChanged();
+  };
+
   return (
     <div className="admin-payouts">
       {lines.map((line, i) => (
@@ -702,9 +725,16 @@ function PayoutEditor({ roundId, lines, onChanged }: { roundId: string; lines: P
           </button>
         </div>
       ) : (
-        <button className="admin-text-btn" type="button" onClick={() => setAdding(true)}>
-          + Payout line
-        </button>
+        <div className="admin-payout-row">
+          <button className="admin-text-btn" type="button" onClick={() => setAdding(true)}>
+            + Payout line
+          </button>
+          {lines.length === 0 && (
+            <button className="admin-text-btn" type="button" disabled={busy} onClick={addDefaults}>
+              + Add the usual bets
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

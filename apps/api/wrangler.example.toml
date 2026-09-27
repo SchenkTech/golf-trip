@@ -23,6 +23,17 @@ database_id = "YOUR_DATABASE_ID"
 # migration folders in sync by hand.
 migrations_dir = "drizzle"
 
+# Trip photo storage (routes/photos.ts) -- optional. R2 has to be turned on
+# for your account first (Cloudflare Dashboard -> R2 -> enable, which asks
+# for a payment method even though the free tier is generous), then create
+# the bucket with `npx wrangler r2 bucket create <your-bucket-name>`. Delete
+# this whole block to run without it -- the photos feature just reports
+# itself unavailable (routes/events.ts checks for the binding) rather than
+# failing the rest of the app.
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "YOUR_BUCKET_NAME"
+
 # apps/web's build output. This one Worker serves both the API and the site:
 # run_worker_first routes exactly the paths this Worker actually handles to
 # Hono; everything else (the SPA, its assets, the logos under

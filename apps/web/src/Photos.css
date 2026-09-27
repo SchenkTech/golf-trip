@@ -1,0 +1,129 @@
+@import "./theme.css";
+
+.photos-page {
+  padding-bottom: 40px;
+}
+
+.photos-upload-closed {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.photos-upload-gate {
+  margin-bottom: 16px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+
+.photos-upload-gate-hint {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.photos-who-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.photos-who-option {
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.photos-upload-row {
+  margin-bottom: 16px;
+}
+
+/* Same filled-navy "most pressed control" treatment as MatchScreen's
+ * stepper/score-pad -- adding a photo is the one thing this screen
+ * writes, everything else is just looking. A <label> wrapping a hidden
+ * file input, same trigger ScorecardImport.tsx uses for "Choose a
+ * photo". */
+.photos-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--navy);
+  border: 1px solid var(--navy);
+  border-radius: 10px;
+  color: var(--navy-ink);
+  cursor: pointer;
+}
+
+.photos-upload-btn input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.photos-upload-btn:has(input:disabled) {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 6px;
+}
+
+.photos-grid-cell {
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.photos-grid-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photos-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  background: rgba(11, 37, 69, 0.92);
+  cursor: pointer;
+}
+
+.photos-lightbox img {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.photos-lightbox-caption {
+  margin: 0;
+  font-size: 13px;
+  color: var(--navy-ink-dim);
+}

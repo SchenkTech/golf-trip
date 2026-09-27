@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, AWARD_RULE_OPTIONS } from "./api.ts";
-import type { AdminAward, AdminEvent, AdminMatch, AdminRound, AdminTeeSet, EventRound, MatchActivity, MatchDetail, QuickRule, TeamRoster } from "./api.ts";
+import type { AdminAward, AdminEvent, AdminMatch, AdminRound, AdminTeeSet, EventPhoto, EventRound, MatchActivity, MatchDetail, QuickRule, TeamRoster } from "./api.ts";
 import { formatWeekday, formatRelativeTime } from "./lib/format.ts";
 import "./Admin.css";
 
@@ -286,6 +286,61 @@ function NewEventForm({ events, onCreated }: { events: AdminEvent[]; onCreated: 
   );
 }
 
+/** Every photo on file for the selected event, regardless of the two
+ *  toggles above (api.adminPhotos bypasses both, unlike the public
+ *  gallery) -- so a photo can be reviewed and removed between trips, not
+ *  just while the album happens to be open. Collapsed by default, same
+ *  as EventSettingsForm below. */
+function PhotoManager({ eventId }: { eventId: string }) {
+  const [open, setOpen] = useState(false);
+  const [photos, setPhotos] = useState<EventPhoto[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = () => api.adminPhotos(eventId).then((r) => setPhotos(r.photos)).catch((e) => setError(String(e)));
+
+  useEffect(() => {
+    if (open) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, eventId]);
+
+  if (!open) {
+    return (
+      <button className="admin-text-btn" onClick={() => setOpen(true)}>
+        Manage photos
+      </button>
+    );
+  }
+
+  return (
+    <div className="admin-new-event">
+      {error && <p className="admin-error">{error}</p>}
+      {photos === null ? (
+        <p className="admin-round-hint">Loading…</p>
+      ) : photos.length === 0 ? (
+        <p className="admin-round-hint">No photos on file for this trip.</p>
+      ) : (
+        <div className="admin-photo-grid">
+          {photos.map((p) => (
+            <div key={p.id} className="admin-photo-cell">
+              <img src={p.url} alt="" />
+              <button
+                className="admin-photo-delete"
+                title={`Delete this photo${p.uploadedByName ? ` (${p.uploadedByName})` : ""}`}
+                onClick={() => api.adminDeletePhoto(eventId, p.id).then(load)}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button className="admin-text-btn" type="button" onClick={() => setOpen(false)}>
+        Done
+      </button>
+    </div>
+  );
+}
+
 /** Editable name/dates/logo/join-code for the currently selected event --
  *  the join code (docs/DECISIONS.md #6) had no UI control at all before
  *  this; setting one meant a raw SQL update. Collapsed by default since
@@ -350,6 +405,23 @@ function EventSettingsForm({ event, onChanged }: { event: AdminEvent; onChanged:
           onChange={(e) => setJoinCode(e.target.value)}
           onBlur={() => joinCode !== (event.joinCode ?? "") && api.adminUpdateEvent(event.id, { joinCode: joinCode.trim() || null }).then(onChanged)}
         />
+      </label>
+      <label className="admin-field admin-field-checkbox">
+        <input
+          type="checkbox"
+          checked={event.photosEnabled}
+          onChange={(e) => api.adminUpdateEvent(event.id, { photosEnabled: e.target.checked }).then(onChanged)}
+        />
+        <span>Photo album -- shows up on More for everyone while checked</span>
+      </label>
+      <label className="admin-field admin-field-checkbox">
+        <input
+          type="checkbox"
+          disabled={!event.photosEnabled}
+          checked={event.photosUploadEnabled}
+          onChange={(e) => api.adminUpdateEvent(event.id, { photosUploadEnabled: e.target.checked }).then(onChanged)}
+        />
+        <span>Taking new uploads -- leave off most of the year, on for the trip itself</span>
       </label>
       <button className="admin-text-btn" type="button" onClick={() => setOpen(false)}>
         Done
@@ -1415,7 +1487,14 @@ export default function Admin() {
       )}
       {(() => {
         const current = events.find((e) => e.id === eventId);
-        return current && <EventSettingsForm event={current} onChanged={loadEvents} />;
+        return (
+          current && (
+            <>
+              <EventSettingsForm event={current} onChanged={loadEvents} />
+              <PhotoManager eventId={current.id} />
+            </>
+          )
+        );
       })()}
 
       {a && b && (

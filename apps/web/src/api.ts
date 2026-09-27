@@ -39,6 +39,18 @@ export interface EventSummary {
   }[];
   /** Enabled awards only -- see schema.ts's note on `award`. */
   awards: EventAward[];
+  /** Whether uploading a photo (Photos.tsx) needs docs/DECISIONS.md #6's
+   *  join code -- same field MatchDetail already exposes for score entry,
+   *  just not previously read anywhere on this type. */
+  requiresCode: boolean;
+  /** Whether Photos.tsx and its More-menu link are reachable at all right
+   *  now -- an admin-only switch (Admin.tsx), off between trips. */
+  photosEnabled: boolean;
+  /** Whether the album is currently taking new uploads -- independent of
+   *  photosEnabled, so last year's photos can stay browsable year-round
+   *  while new uploads are closed outside the trip itself. Meaningless
+   *  when photosEnabled is false. */
+  photosUploadEnabled: boolean;
 }
 
 export interface ScoredMatchPlayer {
@@ -139,6 +151,13 @@ export interface TeamMember {
    *  decided match across every year (live events plus any historical
    *  year with real match detail). */
   record: { weekend: PlayerRecord; allTime: PlayerRecord };
+}
+
+export interface EventPhoto {
+  id: string;
+  url: string;
+  uploadedByName: string | null;
+  createdAt: number;
 }
 
 export interface TeamRoster {
@@ -255,10 +274,13 @@ export interface EventListItem {
   logoUrl: string | null;
 }
 
-/** EventListItem plus the join code -- only ever returned from the admin
- *  route (see routes/admin.ts's GET /events), never the public one. */
+/** EventListItem plus the join code and photo toggles -- only ever
+ *  returned from the admin route (see routes/admin.ts's GET /events),
+ *  never the public one. */
 export interface AdminEvent extends EventListItem {
   joinCode: string | null;
+  photosEnabled: boolean;
+  photosUploadEnabled: boolean;
 }
 
 export interface AdminAward {
@@ -359,6 +381,19 @@ export const api = {
   verifyCode: (eventId: string, code: string) =>
     post<{ ok: boolean }>(`/api/events/${eventId}/verify-code`, { code }),
 
+  photos: (eventId: string) => get<{ photos: EventPhoto[] }>(`/api/events/${eventId}/photos`),
+  // multipart/form-data, not JSON -- the one upload this app makes, so it
+  // gets its own fetch instead of post()'s JSON.stringify body.
+  uploadPhoto: async (eventId: string, file: File, uploadedByName: string | null, code: string | null) => {
+    const form = new FormData();
+    form.set("photo", file);
+    if (uploadedByName) form.set("name", uploadedByName);
+    if (code) form.set("code", code);
+    const res = await fetch(`/api/events/${eventId}/photos`, { method: "POST", body: form });
+    if (!res.ok) throw new Error(`/api/events/${eventId}/photos -> HTTP ${res.status}`);
+    return res.json() as Promise<EventPhoto>;
+  },
+
   // Admin -- gated server-side by Cloudflare Access + ADMIN_EMAILS
   // (src/lib/adminAuth.ts), not by anything in this client.
   adminWhoami: () => get<{ email: string | undefined }>("/api/admin/whoami"),
@@ -413,10 +448,25 @@ export const api = {
   }) => post<{ ok: true; eventId: string }>("/api/admin/events", body),
   adminUpdateEvent: (
     eventId: string,
-    body: Partial<{ name: string; startDate: string; endDate: string; logoUrl: string | null; joinCode: string | null }>,
+    body: Partial<{
+      name: string;
+      startDate: string;
+      endDate: string;
+      logoUrl: string | null;
+      joinCode: string | null;
+      photosEnabled: boolean;
+      photosUploadEnabled: boolean;
+    }>,
   ) => patch<{ ok: true }>(`/api/admin/events/${eventId}`, body),
   adminDeleteEvent: (eventId: string) => del<{ ok: true }>(`/api/admin/events/${eventId}`),
   adminActivity: (eventId: string) => get<{ activity: MatchActivity[] }>(`/api/admin/events/${eventId}/activity`),
+
+  // Unlike photos() above, this lists everything on file regardless of
+  // photosEnabled -- admin still needs to see and delete photos between
+  // trips (routes/admin.ts).
+  adminPhotos: (eventId: string) => get<{ photos: EventPhoto[] }>(`/api/admin/events/${eventId}/photos`),
+  adminDeletePhoto: (eventId: string, photoId: string) =>
+    del<{ ok: true }>(`/api/admin/events/${eventId}/photos/${photoId}`),
 
   adminAwards: (eventId: string) => get<{ awards: AdminAward[] }>(`/api/admin/events/${eventId}/awards`),
   adminCreateAward: (eventId: string, name: string) =>

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { eq, desc } from "drizzle-orm";
+import { env } from "hono/adapter";
+import { eq, and, desc } from "drizzle-orm";
 import { pointsAvailable } from "@gc/scoring";
 import type { ScoringFormat, TeamFormat } from "@gc/scoring";
 import { scoreMatchRows, strokeIndexesFor, segmentPointsFor, PERSONAL_CARD_FORMATS } from "../lib/score.ts";
@@ -209,6 +210,12 @@ async function eventDetail(c: Context<AppEnv>, eventId: string) {
     // Whether scoring on this event needs docs/DECISIONS.md #6's join code
     // -- never the code itself, which this response never includes.
     requiresCode: event.joinCode !== null,
+    // Whether the album (and the More menu's Photos link) is reachable at
+    // all right now, and separately whether it's currently taking new
+    // uploads -- see schema.ts's note on event.photosUploadEnabled for why
+    // these are two switches, not one.
+    photosEnabled: event.photosEnabled,
+    photosUploadEnabled: event.photosUploadEnabled,
     teams: teams.map((t) => ({
       id: t.id,
       name: t.name,
@@ -331,4 +338,115 @@ events.get("/:id/teams", async (c) => {
   });
 
   return c.json({ eventId, teams: out });
+});
+
+// ------------------------------------------------------------- photos
+
+/** 10MB -- generous for a phone photo (the client also downscales before
+ *  sending, same idea as ScorecardImport.tsx's toDownscaledFile), stingy
+ *  enough that nobody can quietly fill up the R2 bucket with one upload. */
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+
+function photoUrl(eventId: string, photoId: string): string {
+  return `/api/events/${eventId}/photos/${photoId}/image`;
+}
+
+/** Every trip photo, newest first -- 404s, not an empty list, while
+ *  photosEnabled is off, so a device that had this screen open before an
+ *  admin switched it off stops seeing anything rather than a stale list
+ *  (docs on event.photosEnabled, schema.ts). */
+events.get("/:id/photos", async (c) => {
+  const db = c.get("db");
+  const eventId = c.req.param("id");
+
+  const event = await db.query.event.findFirst({ where: eq(schema.event.id, eventId) });
+  if (!event) return c.json({ error: "event not found" }, 404);
+  if (!event.photosEnabled) return c.json({ error: "photos aren't open for this event" }, 404);
+
+  const rows = await db.query.eventPhoto.findMany({ where: eq(schema.eventPhoto.eventId, eventId) });
+  rows.sort((a, b) => b.createdAt - a.createdAt);
+
+  return c.json({
+    photos: rows.map((r) => ({
+      id: r.id,
+      url: photoUrl(eventId, r.id),
+      uploadedByName: r.uploadedByName,
+      createdAt: r.createdAt,
+    })),
+  });
+});
+
+/** Upload one photo -- multipart/form-data, not JSON: this is the one
+ *  endpoint in the app that ever receives real binary bytes, so it gets
+ *  its own body-parsing story instead of matches.ts's batch-of-JSON
+ *  pattern. Gated by photosEnabled AND photosUploadEnabled (both, not
+ *  either -- an album that's viewable but closed to new uploads, the
+ *  normal state outside the trip itself, must reject this even though
+ *  GET /:id/photos above is still serving it) and docs/DECISIONS.md #6's
+ *  join code (a "speed bump, not a security boundary", same as score
+ *  entry -- see routes/matches.ts's POST /:id/scores for the identical
+ *  check). */
+events.post("/:id/photos", async (c) => {
+  const db = c.get("db");
+  const bucket = env(c).PHOTOS;
+  if (!bucket) return c.json({ error: "photo storage isn't configured for this deployment" }, 501);
+
+  const eventId = c.req.param("id");
+  const event = await db.query.event.findFirst({ where: eq(schema.event.id, eventId) });
+  if (!event) return c.json({ error: "event not found" }, 404);
+  if (!event.photosEnabled) return c.json({ error: "photos aren't open for this event" }, 403);
+  if (!event.photosUploadEnabled) return c.json({ error: "uploads are closed right now" }, 403);
+
+  const body = await c.req.parseBody();
+  const file = body["photo"];
+  if (!(file instanceof File)) return c.json({ error: "photo file required" }, 400);
+  if (!file.type.startsWith("image/")) return c.json({ error: "file is not an image" }, 400);
+  if (file.size > MAX_PHOTO_BYTES) return c.json({ error: "photo is too large" }, 413);
+
+  const requiredCode = event.joinCode;
+  const code = typeof body["code"] === "string" ? body["code"] : undefined;
+  if (requiredCode && code !== requiredCode) return c.json({ error: "wrong or missing join code" }, 403);
+
+  const rawName = typeof body["name"] === "string" ? body["name"].trim() : "";
+  const uploadedByName = rawName ? rawName.slice(0, 60) : null;
+
+  const id = crypto.randomUUID();
+  const r2Key = `events/${eventId}/photos/${id}`;
+  await bucket.put(r2Key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } });
+
+  const createdAt = Date.now();
+  await db.insert(schema.eventPhoto).values({ id, eventId, r2Key, uploadedByName, createdAt });
+
+  return c.json({ id, url: photoUrl(eventId, id), uploadedByName, createdAt }, 201);
+});
+
+/** The actual image bytes, streamed from R2 -- also 404s while
+ *  photosEnabled is off, same as the list above, so a saved or shared
+ *  direct link stops working the moment an admin locks the album back up
+ *  rather than staying quietly reachable. Cached hard: an R2 key is never
+ *  reused (a new upload always gets a fresh id), so nothing ever needs
+ *  this response to expire. */
+events.get("/:id/photos/:photoId/image", async (c) => {
+  const db = c.get("db");
+  const bucket = env(c).PHOTOS;
+  if (!bucket) return c.json({ error: "photo storage isn't configured for this deployment" }, 501);
+
+  const eventId = c.req.param("id");
+  const event = await db.query.event.findFirst({ where: eq(schema.event.id, eventId) });
+  if (!event || !event.photosEnabled) return c.json({ error: "photo not found" }, 404);
+
+  const row = await db.query.eventPhoto.findFirst({
+    where: and(eq(schema.eventPhoto.id, c.req.param("photoId")), eq(schema.eventPhoto.eventId, eventId)),
+  });
+  if (!row) return c.json({ error: "photo not found" }, 404);
+
+  const object = await bucket.get(row.r2Key);
+  if (!object) return c.json({ error: "photo not found" }, 404);
+
+  return new Response(object.body, {
+    headers: {
+      "Content-Type": object.httpMetadata?.contentType ?? "image/jpeg",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
 });

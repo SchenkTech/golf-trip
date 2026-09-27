@@ -403,6 +403,8 @@ admin.get("/events", async (c) => {
       // (see events.ts's verify-code route, the only place a code should
       // ever be checked from the outside).
       joinCode: e.joinCode,
+      photosEnabled: e.photosEnabled,
+      photosUploadEnabled: e.photosUploadEnabled,
     })),
   });
 });
@@ -601,6 +603,8 @@ admin.patch("/events/:eventId", async (c) => {
     endDate?: string;
     logoUrl?: string | null;
     joinCode?: string | null;
+    photosEnabled?: boolean;
+    photosUploadEnabled?: boolean;
   }>();
 
   const existing = await db.query.event.findFirst({ where: eq(schema.event.id, eventId) });
@@ -614,8 +618,50 @@ admin.patch("/events/:eventId", async (c) => {
       ...(body.endDate !== undefined ? { endDate: body.endDate } : {}),
       ...(body.logoUrl !== undefined ? { logoUrl: body.logoUrl?.trim() || null } : {}),
       ...(body.joinCode !== undefined ? { joinCode: body.joinCode?.trim() || null } : {}),
+      ...(body.photosEnabled !== undefined ? { photosEnabled: body.photosEnabled } : {}),
+      ...(body.photosUploadEnabled !== undefined ? { photosUploadEnabled: body.photosUploadEnabled } : {}),
     })
     .where(eq(schema.event.id, eventId));
+
+  return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------- photos
+
+/** Every photo on file for an event, regardless of photosEnabled -- unlike
+ *  the public GET /api/events/:id/photos (routes/events.ts), which 404s
+ *  the instant the switch is off, admin still needs to see and delete
+ *  photos between trips, while nobody else can. */
+admin.get("/events/:eventId/photos", async (c) => {
+  const db = c.get("db");
+  const eventId = c.req.param("eventId");
+  const rows = await db.query.eventPhoto.findMany({ where: eq(schema.eventPhoto.eventId, eventId) });
+  rows.sort((a, b) => b.createdAt - a.createdAt);
+  return c.json({
+    photos: rows.map((r) => ({
+      id: r.id,
+      url: `/api/events/${eventId}/photos/${r.id}/image`,
+      uploadedByName: r.uploadedByName,
+      createdAt: r.createdAt,
+    })),
+  });
+});
+
+/** Removes both the R2 object and its row together -- see schema.ts's note
+ *  on eventPhoto for why neither should ever exist without the other. */
+admin.delete("/events/:eventId/photos/:photoId", async (c) => {
+  const db = c.get("db");
+  const bucket = env(c).PHOTOS;
+  const eventId = c.req.param("eventId");
+  const photoId = c.req.param("photoId");
+
+  const row = await db.query.eventPhoto.findFirst({
+    where: and(eq(schema.eventPhoto.id, photoId), eq(schema.eventPhoto.eventId, eventId)),
+  });
+  if (!row) return c.json({ error: "photo not found" }, 404);
+
+  if (bucket) await bucket.delete(row.r2Key);
+  await db.delete(schema.eventPhoto).where(eq(schema.eventPhoto.id, photoId));
 
   return c.json({ ok: true });
 });

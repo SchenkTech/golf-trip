@@ -74,6 +74,16 @@ export function IconMore() {
   );
 }
 
+export function IconPhotos() {
+  return (
+    <svg {...iconProps()}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="11" r="2" />
+      <path d="M21 16.5 16 12l-9 8" />
+    </svg>
+  );
+}
+
 export function IconChevron() {
   return (
     <svg {...iconProps()} width={18} height={18}>

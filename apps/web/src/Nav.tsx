@@ -43,7 +43,10 @@ export default function Nav() {
               : to === "/matches"
                 ? path.startsWith("/matches") || path.startsWith("/trips/")
                 : to === "/more"
-                  ? path.startsWith("/more") || path.startsWith("/rules") || path.startsWith("/admin")
+                  ? path.startsWith("/more") ||
+                    path.startsWith("/rules") ||
+                    path.startsWith("/admin") ||
+                    path.startsWith("/photos")
                   : path.startsWith(to);
           return (
             <Link key={to} to={to} className={`bottom-nav-link ${active ? "active" : ""}`}>

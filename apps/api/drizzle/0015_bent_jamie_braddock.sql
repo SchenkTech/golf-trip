@@ -1,0 +1,1 @@
+ALTER TABLE `event` ADD `photos_upload_enabled` integer DEFAULT false NOT NULL;

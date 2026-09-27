@@ -19,8 +19,8 @@
     "@gc/scoring": "*",
     "@hono/node-server": "^2.1.1",
     "@libsql/client": "^0.18.0",
-    "drizzle-orm": "^0.45.2",
-    "hono": "^4.6.14"
+    "drizzle-orm": "^0.45.3",
+    "hono": "^4.6.18"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260920.1",

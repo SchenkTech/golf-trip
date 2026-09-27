@@ -129,6 +129,40 @@ Admin — both keep their own route and screen, so a direct link to either
 still works. Nothing about Rules or Admin's own access rules changed; only
 how a tab bar reaches them did.
 
+## 11. Photo albums, reversed — but off by default and admin-gated
+
+docs/SPEC.md ruled out "photo galleries" outright, alongside chat and push
+notifications, as things that don't belong in an app built to make the first
+screen faster to understand, not slower. Reversed on request, but not by
+dropping the reasoning — by keeping the feature entirely optional and
+answering the actual complaint (random uploads showing up outside the trip)
+with two separate switches on the event, not one:
+
+- **`photosEnabled`** — whether the album (and its More-menu link) exists at
+  all right now. Off by default. While it's off, nothing about photos is
+  reachable: no screen, no list, no image link, even a saved direct URL
+  404s. This is the one that makes it a real "no feature most of the year,"
+  not a hidden-but-still-serving one.
+- **`photosUploadEnabled`** — whether new photos can be added, independent
+  of the switch above. The point of splitting these: an admin can leave a
+  finished trip's album up to browse (`photosEnabled` on) without leaving it
+  open to new uploads (`photosUploadEnabled` off) outside the weekend
+  itself, then flip both on for the trip.
+
+Storage is Cloudflare R2 (`routes/events.ts`'s photo routes, `apps/api/src/
+types.ts`'s `PHOTOS` binding) — the first new piece of paid-capable
+infrastructure since docs/DECISIONS.md #9 reversed course on a hosted OCR
+API for exactly this reason. R2's free tier is generous enough for a dozen
+friends' weekend photos, and the binding is optional: a deployment that
+never enables R2 (the Node/self-host entrypoint has no equivalent, and
+`wrangler.example.toml`'s block can just be deleted) gets a plain "not
+configured" response from the upload route instead of a broken build, the
+same graceful-absence pattern `ANTHROPIC_API_KEY` used to follow.
+
+Uploading (not viewing) needs the same join code plus a name
+docs/DECISIONS.md #6 already uses for scoring, reusing the same device
+identity — no separate photos-specific auth to build or explain.
+
 ---
 
 ## Open

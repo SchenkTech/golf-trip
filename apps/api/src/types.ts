@@ -29,6 +29,12 @@ export interface Env {
    *  callback (src/routes/auth.ts) -- anyone can complete Google OAuth,
    *  but only these emails actually get a session. */
   ADMIN_EMAILS: string;
+  /** Trip photo storage (routes/photos.ts) -- Cloudflare-only, like DB.
+   *  Optional (`?`), unlike DB: the Node entrypoint (src/node.ts) has no
+   *  equivalent binding to set, and routes/photos.ts checks for its
+   *  absence rather than assume every deployment has it configured, the
+   *  same way ANTHROPIC_API_KEY used to work back when there was one. */
+  PHOTOS?: R2Bucket;
 }
 
 /** Every route's Hono generic: env bindings plus the one request-scoped

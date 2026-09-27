@@ -181,6 +181,20 @@ points are worth, and the local rules the group argues about every year.
 Worth real writing: if Nassau is in play, this page is what stops the "wait,
 so the back nine is separate?" conversation happening on the first tee.
 
+## Photos — optional, off by default
+
+Not one of the six screens above — this one doesn't exist until an admin
+turns it on (docs/DECISIONS.md #11), and stays off the rest of the year on
+purpose. Two separate switches, not one: whether the album exists at all
+right now, and whether it's taking new uploads — so a finished trip's
+photos can stay up to browse without staying open to strangers finding the
+link mid-January.
+
+When it's on: everyone can look, the same "reading needs nothing" rule as
+the Board. Adding a photo needs the same join code and name Sign-in already
+uses for scoring, not a separate account. An admin can delete any photo,
+same three-people-not-a-mod-team scale as everything else in Admin.
+
 ## Admin — in the same app, role-gated
 
 Three screens, for two or three people:
@@ -213,8 +227,10 @@ that loses a hole is a scoreboard nobody trusts by Saturday.
 
 ## Explicitly out of scope
 
-Chat. Photo galleries. Betting or side-game ledgers. Push notifications.
-Live GPS. Anything that makes the first screen take longer to understand.
+Chat. Betting or side-game ledgers. Push notifications. Live GPS. Anything
+that makes the first screen take longer to understand. (Photo galleries
+were on this list too, until docs/DECISIONS.md #11 reversed it — kept
+narrow and off by default rather than removed from the list outright.)
 
 ## Branding assets
 

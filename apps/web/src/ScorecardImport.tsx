@@ -3,6 +3,7 @@ import type { MatchDetail } from "./api.ts";
 import { layoutReadings, matchPlayerName } from "./lib/scorecardOcr.ts";
 import type { OcrWord } from "./lib/scorecardOcr.ts";
 import { recognizeScorecard } from "./lib/tesseractRecognize.ts";
+import { downscaleImage } from "./lib/image.ts";
 import "./ScorecardImport.css";
 
 /** One editable cell, addressed by its column position (not yet a real
@@ -37,30 +38,7 @@ interface Column {
 const MAX_EDGE = 2200;
 
 function toDownscaledFile(file: File): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("could not read the photo"));
-    reader.onload = () => {
-      img.onerror = () => reject(new Error("could not read the photo"));
-      img.onload = () => {
-        const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("could not read the photo"));
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (blob) => (blob ? resolve(new File([blob], file.name, { type: "image/jpeg" })) : reject(new Error("could not read the photo"))),
-          "image/jpeg",
-          0.92,
-        );
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
+  return downscaleImage(file, MAX_EDGE, 0.92);
 }
 
 type Stage =

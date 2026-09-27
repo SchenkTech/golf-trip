@@ -79,6 +79,41 @@ export const event = sqliteTable("event", {
    *  column existed, rather than locking out scoring for an event nobody
    *  has configured a code for). */
   joinCode: text("join_code"),
+  /** Off by default -- see eventPhoto below. An admin flips this on for the
+   *  weekend and back off afterward; the app has no photo screen at all
+   *  while it's false, not just a hidden one. Distinct from
+   *  photosUploadEnabled just below: this one gates whether the album
+   *  exists at all right now, that one gates only new uploads into it. */
+  photosEnabled: integer("photos_enabled", { mode: "boolean" }).notNull().default(false),
+  /** Whether new photos can be added right now -- independent of
+   *  photosEnabled so an admin can leave last year's album up to browse
+   *  (photosEnabled true) year-round while keeping it closed to new
+   *  uploads (this false) outside the trip itself, then open both for
+   *  the weekend. Meaningless when photosEnabled is false: nothing is
+   *  reachable to upload into anyway. */
+  photosUploadEnabled: integer("photos_upload_enabled", { mode: "boolean" }).notNull().default(false),
+});
+
+/** One uploaded trip photo -- only exists while event.photosEnabled has
+ *  been true at some point; nothing here is fetched or shown otherwise
+ *  (see routes/photos.ts). The image bytes themselves live in R2 (the
+ *  PHOTOS binding, Cloudflare-only -- see types.ts), keyed by `r2Key`;
+ *  this row is only the metadata, same "derive/store split" as a match's
+ *  logo URLs pointing at files this table doesn't hold. Deleting a photo
+ *  removes both the R2 object and this row together -- an orphaned row
+ *  with no object is a broken image, an orphaned object with no row is
+ *  just wasted storage, and neither should be possible on its own. */
+export const eventPhoto = sqliteTable("event_photo", {
+  id: text("id").primaryKey(),
+  eventId: text("event_id").notNull().references(() => event.id),
+  r2Key: text("r2_key").notNull(),
+  /** Whoever the device was identified as at upload time (docs/DECISIONS.md
+   *  #6's "a join code plus a name"), captured as plain text rather than a
+   *  player reference -- attribution on a photo is a courtesy caption, not
+   *  a fact anything else derives from, so it survives a roster edit
+   *  intact instead of going stale or cascading. */
+  uploadedByName: text("uploaded_by_name"),
+  createdAt: integer("created_at").notNull(), // unix ms
 });
 
 /** A side within one event. Names/colours are per-event, not global --

@@ -114,6 +114,14 @@ What the live copy actually runs. See `docs/HOSTING.md` for why.
    this directly — no separate deploy step for the frontend).
 5. `npx wrangler d1 migrations apply <your-db-name> --remote`
 6. `npx wrangler deploy` (from `apps/api`)
+7. **Optional** — trip photos (docs/DECISIONS.md #11), off by default and
+   skippable entirely: enable R2 for the account (Cloudflare Dashboard →
+   R2 → enable, which asks for a payment method even though the free tier
+   covers this app's scale easily), `npx wrangler r2 bucket create
+   <your-bucket-name>`, then uncomment/fill in the `[[r2_buckets]]` block
+   in `wrangler.toml` with that name and redeploy. Without this step the
+   photos feature just reports itself unavailable rather than breaking
+   anything else (`routes/events.ts` checks for the binding).
 
 Local dev needs none of the above except a `.dev.vars` file in `apps/api`
 (gitignored) with `GOOGLE_CLIENT_SECRET` and `SESSION_SECRET` — `wrangler

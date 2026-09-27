@@ -148,6 +148,12 @@ closest to pin. See `apps/api/src/lib/awards.ts`.
 Two rosters, captains marked, handicaps shown. Each player's record for the
 weekend, and their all-time record against the other side.
 
+**Built:** a round photo next to each name (docs/DECISIONS.md #13). Admin
+can set anyone's; a player can set their own directly from this screen,
+no sign-in — the same "who are you" identity Sign-in already uses for
+scoring, trusted the same way. Everyone starts with their initial on a
+plain background instead of a blank space.
+
 ## History
 
 Past years. Per event: the final score, who won, the match-by-match results,

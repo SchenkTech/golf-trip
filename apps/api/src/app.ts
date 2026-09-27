@@ -6,6 +6,7 @@ import { admin } from "./routes/admin.ts";
 import { auth } from "./routes/auth.ts";
 import { history } from "./routes/history.ts";
 import { rules } from "./routes/rules.ts";
+import { players } from "./routes/players.ts";
 import type { AppEnv } from "./types.ts";
 
 /**
@@ -32,6 +33,7 @@ export function buildApi() {
   api.route("/auth", auth);
   api.route("/history", history);
   api.route("/rules", rules);
+  api.route("/players", players);
 
   return api;
 }

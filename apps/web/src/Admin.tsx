@@ -17,6 +17,7 @@ import type {
   TeamRoster,
 } from "./api.ts";
 import { formatWeekday, formatRelativeTime } from "./lib/format.ts";
+import { downscaleImage } from "./lib/image.ts";
 import "./Admin.css";
 
 type Auth = { status: "loading" } | { status: "in"; email: string } | { status: "out" };
@@ -40,9 +41,47 @@ function RosterRow({
   const [name, setName] = useState(member.name);
   const [hcp, setHcp] = useState(String(member.handicapIndex));
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   return (
     <div className="admin-row">
+      <label className="admin-avatar" title="Set this player's photo">
+        {member.photoUrl ? (
+          <img className="admin-avatar-img" src={member.photoUrl} alt="" />
+        ) : (
+          <span className="admin-avatar-initial">{member.name.trim().charAt(0).toUpperCase()}</span>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          disabled={photoBusy}
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            setPhotoBusy(true);
+            const resized = await downscaleImage(file, 640, 0.85);
+            await api.uploadPlayerPhoto(member.playerId, resized);
+            setPhotoBusy(false);
+            onChanged();
+          }}
+        />
+      </label>
+      {member.photoUrl && (
+        <button
+          className="admin-icon-btn"
+          title="Remove photo"
+          disabled={photoBusy}
+          onClick={async () => {
+            setPhotoBusy(true);
+            await api.adminDeletePlayerPhoto(member.playerId);
+            setPhotoBusy(false);
+            onChanged();
+          }}
+        >
+          ✕
+        </button>
+      )}
       <input
         className="admin-input admin-input-name"
         value={name}

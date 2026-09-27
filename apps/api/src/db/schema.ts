@@ -21,6 +21,15 @@ export const player = sqliteTable("player", {
    *  legal names. */
   nickname: text("nickname"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  /** When this player's photo (routes/players.ts) was last set, unix ms --
+   *  null means no photo. Not the photo's own storage: the bytes live in
+   *  R2 under a deterministic key (`players/<id>`, one per player, always
+   *  overwritten rather than versioned, so there's nothing to clean up
+   *  when a photo is replaced). This timestamp exists only as a cache-
+   *  buster in the served URL (`?v=<this>`) -- without it, a phone that
+   *  already fetched the old photo at the same URL would keep showing it
+   *  after a replacement, PWA caching being what it is. */
+  photoUpdatedAt: integer("photo_updated_at"),
 });
 
 // --------------------------------------------------------------- course

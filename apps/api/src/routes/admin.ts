@@ -10,6 +10,7 @@ import { loadPlayerLabels } from "../lib/players.ts";
 import { scoreMatchRows, strokeIndexesFor, segmentPointsFor } from "../lib/score.ts";
 import { asBatch } from "../lib/batch.ts";
 import { isAwardRule } from "../lib/awards.ts";
+import { loadPayoutLeaders } from "../lib/payoutLeaders.ts";
 import * as schema from "../db/schema.ts";
 import type { AppEnv } from "../types.ts";
 
@@ -692,6 +693,18 @@ admin.delete("/events/:eventId/photos/:photoId", async (c) => {
 });
 
 // -------------------------------------------------------------- payouts
+
+/** Who's currently leading each of the round's usual net-score pots (front
+ *  9 / back 9 / overall individual, best-ball team) -- see lib/
+ *  payoutLeaders.ts. Read-only and computed fresh on every call, same
+ *  "derive, don't store" discipline as the Cup's own points; this is
+ *  never attached to a specific payoutLine, since a round's payout lines
+ *  are free-text and might not even be these four bets. */
+admin.get("/rounds/:roundId/payout-leaders", async (c) => {
+  const db = c.get("db");
+  const leaders = await loadPayoutLeaders(db, c.req.param("roundId"));
+  return c.json(leaders);
+});
 
 /** A new side-bet line on a round -- appended after whatever's already
  *  there, same "no position up front, reorder with the buttons afterward"

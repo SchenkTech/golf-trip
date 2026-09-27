@@ -1,0 +1,1 @@
+ALTER TABLE `player` ADD `photo_updated_at` integer;

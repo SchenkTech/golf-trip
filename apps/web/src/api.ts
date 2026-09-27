@@ -147,6 +147,10 @@ export interface TeamMember {
   name: string;
   handicapIndex: number;
   isCaptain: boolean;
+  /** Null until someone's uploaded one (Teams.tsx, or Admin) -- see
+   *  schema.ts's note on player.photoUpdatedAt for the cache-busting
+   *  `?v=` this already has baked in. */
+  photoUrl: string | null;
   /** See docs/SPEC.md's Teams section -- this event's matches, and every
    *  decided match across every year (live events plus any historical
    *  year with real match detail). */
@@ -423,8 +427,8 @@ export const api = {
     post<{ ok: boolean }>(`/api/events/${eventId}/verify-code`, { code }),
 
   photos: (eventId: string) => get<{ photos: EventPhoto[] }>(`/api/events/${eventId}/photos`),
-  // multipart/form-data, not JSON -- the one upload this app makes, so it
-  // gets its own fetch instead of post()'s JSON.stringify body.
+  // multipart/form-data, not JSON -- an upload gets its own fetch instead
+  // of post()'s JSON.stringify body. Same shape as uploadPlayerPhoto below.
   uploadPhoto: async (eventId: string, file: File, uploadedByName: string | null, code: string | null) => {
     const form = new FormData();
     form.set("photo", file);
@@ -433,6 +437,14 @@ export const api = {
     const res = await fetch(`/api/events/${eventId}/photos`, { method: "POST", body: form });
     if (!res.ok) throw new Error(`/api/events/${eventId}/photos -> HTTP ${res.status}`);
     return res.json() as Promise<EventPhoto>;
+  },
+
+  uploadPlayerPhoto: async (playerId: string, file: File) => {
+    const form = new FormData();
+    form.set("photo", file);
+    const res = await fetch(`/api/players/${playerId}/photo`, { method: "POST", body: form });
+    if (!res.ok) throw new Error(`/api/players/${playerId}/photo -> HTTP ${res.status}`);
+    return res.json() as Promise<{ photoUrl: string }>;
   },
 
   // Admin -- gated server-side by Cloudflare Access + ADMIN_EMAILS
@@ -448,6 +460,7 @@ export const api = {
     post<{ ok: true; playerId: string }>(`/api/admin/teams/${teamId}/add-player`, body),
   adminRemovePlayer: (teamId: string, playerId: string) =>
     del<{ ok: true }>(`/api/admin/teams/${teamId}/players/${playerId}`),
+  adminDeletePlayerPhoto: (playerId: string) => del<{ ok: true }>(`/api/admin/players/${playerId}/photo`),
   adminRounds: (eventId: string) => get<{ rounds: AdminRound[] }>(`/api/admin/rounds/${eventId}`),
   adminCreateRound: (body: {
     eventId: string;

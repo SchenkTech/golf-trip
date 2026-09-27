@@ -5,7 +5,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { pointsAvailable } from "@gc/scoring";
 import type { ScoringFormat, TeamFormat } from "@gc/scoring";
 import { scoreMatchRows, strokeIndexesFor, segmentPointsFor, PERSONAL_CARD_FORMATS } from "../lib/score.ts";
-import { loadPlayerLabels } from "../lib/players.ts";
+import { loadPlayerLabels, loadPlayerPhotoUrls } from "../lib/players.ts";
 import { loadPlayerRecords } from "../lib/records.ts";
 import { isAwardRule, resolveAward } from "../lib/awards.ts";
 import type { AwardContext } from "../lib/awards.ts";
@@ -309,6 +309,7 @@ events.get("/:id/teams", async (c) => {
     with: { members: true },
   });
   const labels = await loadPlayerLabels(db);
+  const photos = await loadPlayerPhotoUrls(db);
   const [weekend, allTime] = await Promise.all([
     loadPlayerRecords(db, { eventId }),
     loadPlayerRecords(db, { includeHistorical: true }),
@@ -328,6 +329,7 @@ events.get("/:id/teams", async (c) => {
           name: labels.get(m.playerId) ?? m.playerId,
           handicapIndex: m.handicapIndex,
           isCaptain: (labels.get(m.playerId) ?? "").toLowerCase() === captainName,
+          photoUrl: photos.get(m.playerId) ?? null,
           record: {
             weekend: weekend.get(m.playerId) ?? zero,
             allTime: allTime.get(m.playerId) ?? zero,

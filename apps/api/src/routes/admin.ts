@@ -68,6 +68,24 @@ admin.patch("/players/:playerId", async (c) => {
   return c.json({ ok: true });
 });
 
+/** Removes a player's photo -- moderation lever for the one thing about
+ *  player photos (routes/players.ts) that has no self-service undo:
+ *  anyone can upload one for anyone (see that route's own note on why),
+ *  but only Admin can take one down. */
+admin.delete("/players/:playerId/photo", async (c) => {
+  const db = c.get("db");
+  const bucket = env(c).PHOTOS;
+  const playerId = c.req.param("playerId");
+
+  const existing = await db.query.player.findFirst({ where: eq(schema.player.id, playerId) });
+  if (!existing) return c.json({ error: "player not found" }, 404);
+
+  if (bucket) await bucket.delete(`players/${playerId}`);
+  await db.update(schema.player).set({ photoUpdatedAt: null }).where(eq(schema.player.id, playerId));
+
+  return c.json({ ok: true });
+});
+
 /** Handicap index is per (team, player) -- see schema.ts's note on
  *  team_member -- since it's carried into one specific trip, not the
  *  person forever. */

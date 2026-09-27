@@ -221,6 +221,37 @@ Rounds with no side bets (most trips, most rounds) just have no
 `payoutLine` rows — an empty section in Admin, not a set of zeroed-out
 ones.
 
+## 13. Player photos: self-service, on the same trust the roster already runs on
+
+Teams needed a photo next to each name — admin can set anyone's, and,
+new for this app, a player can set their own without signing in as
+anything. That second half only works because it leans on a trust model
+this app already committed to rather than inventing a new one.
+
+Score entry (docs/DECISIONS.md #4) already lets any device enter a score
+attributed to any roster name — there's no real per-player login, just a
+"who are you" pick that's remembered locally and trusted at face value.
+Player photos use the exact same identity (`lib/identity.ts`) for the
+exact same reason: asking "are you sure this is you" to a dozen friends
+on a golf trip is the wrong kind of friction for a decoration, when the
+same app already doesn't ask it for the score itself. `routes/players.ts`'s
+upload endpoint reflects this honestly — no join code, no ownership
+check, any request naming a real player ID succeeds. What actually keeps
+a random photo from landing on someone else's row is the client: the
+Teams screen only ever shows the upload control on the row matching your
+own picked identity. That's a UI convention, the same category of thing
+the "who are you" picker itself already is, not a security boundary —
+and it's why Admin's own photo control has no such restriction, since
+admin already is the actual backstop (a delete button, same moderation
+role Admin plays for trip photos in #11).
+
+One photo per player, not a gallery — a fresh upload overwrites the same
+R2 key (`players/<id>`) rather than versioning, so there's nothing to
+garbage-collect when someone replaces theirs. `player.photoUpdatedAt`
+exists only to cache-bust the served URL (`?v=<timestamp>`); without it,
+a device that already loaded the old photo at that same URL would keep
+showing it after a replacement.
+
 ---
 
 ## Open

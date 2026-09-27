@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
 import { api, AWARD_RULE_OPTIONS } from "./api.ts";
-import type { AdminAward, AdminEvent, AdminMatch, AdminRound, AdminTeeSet, EventPhoto, EventRound, MatchActivity, MatchDetail, PayoutLine, QuickRule, TeamRoster } from "./api.ts";
+import type {
+  AdminAward,
+  AdminEvent,
+  AdminMatch,
+  AdminRound,
+  AdminTeeSet,
+  EventPhoto,
+  EventRound,
+  MatchActivity,
+  MatchDetail,
+  NetLeaderGroup,
+  PayoutLeaders,
+  PayoutLine,
+  QuickRule,
+  TeamRoster,
+} from "./api.ts";
 import { formatWeekday, formatRelativeTime } from "./lib/format.ts";
 import "./Admin.css";
 
@@ -605,6 +620,44 @@ function RoundRow({
   );
 }
 
+/** Who'd currently take each of the round's usual net-score pots -- front
+ *  9 / back 9 / overall (best individual net across the whole round,
+ *  regardless of which match someone's in) and best ball (best round-net
+ *  side across every match). Computed fresh server-side every time this
+ *  mounts (lib/payoutLeaders.ts); nothing here is stored, and it's never
+ *  matched to a specific payout line above since those are free text and
+ *  might not even be these four bets. Only shown once a round actually
+ *  has payout lines, so a normal side-bet-free round doesn't pay for the
+ *  fetch. */
+function PayoutLeadersInfo({ roundId }: { roundId: string }) {
+  const [leaders, setLeaders] = useState<PayoutLeaders | null>(null);
+
+  useEffect(() => {
+    api.adminPayoutLeaders(roundId).then(setLeaders).catch(() => setLeaders(null));
+  }, [roundId]);
+
+  if (!leaders) return null;
+
+  const individualLine = (label: string, group: NetLeaderGroup | null) =>
+    group ? `${label}: ${group.leaders.map((p) => p.name).join(" & ")} (net ${group.net})` : `${label}: nobody's finished it yet`;
+
+  const bestBallLine = leaders.bestBall
+    ? `Best ball: ${leaders.bestBall.leaders.map((s) => s.players.map((p) => p.name).join(" & ")).join(" / ")} (net ${leaders.bestBall.net})`
+    : "Best ball: nobody's finished a full 18 yet";
+
+  return (
+    <div className="admin-payout-leaders">
+      <p className="admin-payout-leaders-title">Net leaders right now -- not the Cup score, see docs/DECISIONS.md #12:</p>
+      <ul className="admin-payout-leaders-list">
+        <li>{individualLine("Front 9", leaders.front9)}</li>
+        <li>{individualLine("Back 9", leaders.back9)}</li>
+        <li>{individualLine("Overall", leaders.overall)}</li>
+        <li>{bestBallLine}</li>
+      </ul>
+    </div>
+  );
+}
+
 /** Real-money side bets for one round (docs/DECISIONS.md #12) -- label,
  *  per-player cost, and the line's total payout, all admin-entered.
  *  Usually empty; most rounds have no side bets at all, so this reads as
@@ -635,6 +688,7 @@ function PayoutEditor({ roundId, lines, onChanged }: { roundId: string; lines: P
       {lines.map((line, i) => (
         <PayoutLineRow key={line.id} line={line} isFirst={i === 0} isLast={i === lines.length - 1} onChanged={onChanged} />
       ))}
+      {lines.length > 0 && <PayoutLeadersInfo roundId={roundId} />}
       {adding ? (
         <div className="admin-payout-row admin-payout-add">
           <input className="admin-input" placeholder="Label -- Front 9, BB Winner" value={label} onChange={(e) => setLabel(e.target.value)} />

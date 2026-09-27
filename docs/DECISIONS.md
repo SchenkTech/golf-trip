@@ -188,6 +188,27 @@ an admin types in per line, and the app only ever does the one piece of
 arithmetic it can vouch for: `total trip cost − sum of every round's
 payout lines = what's left for the Cup's overall winner`.
 
+**Follow-up: the group's actual rule turned out to be derivable.** Asked
+directly, front 9 / back 9 / overall are each won by whoever has the best
+*net stroke-play* total for that stretch — individually, across the whole
+field, not a Cup segment — and best-ball is the best round-net side
+across every match in the round (6 sides in a 3-match round, matching the
+group's own $18.50 × 6 = $111 math exactly). That's a real formula, just
+not the Cup's own scoring: stroke play on total net strokes, not match
+play on holes won, even though both start from the same gross scores and
+handicap allowance (`packages/scoring/holes.ts`'s new `netByHole`/
+`netSum`/`bestNetByHole`, `apps/api/lib/payoutLeaders.ts`). Confirmed
+against the group's own tie rule (split evenly) before building.
+
+This doesn't change the paragraph above: `cost` and `payout` (the dollar
+amounts) are still declared, because there's still no formula from a
+buy-in to a pot size. What's derived now is *who's leading* each of
+those four specific pots — shown read-only in Admin next to a round's
+payout lines, recomputed fresh on every load, never stored, and never
+assumed to be the only bets a group might set up (a payout line's label
+is still free text; this only knows how to answer for these four,
+specifically-confirmed shapes).
+
 **Why admin-only, not public.** Unlike the Cup's own score, a pool's cost
 structure is closer to bookkeeping than to something everyone needs
 propped on a phone. Kept inside Admin (`routes/admin.ts`'s `/payouts`

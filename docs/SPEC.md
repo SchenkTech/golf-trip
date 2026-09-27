@@ -217,6 +217,14 @@ vouch for — total cost minus every line's payout is what's left for the
 Cup's overall winner. Admin-only; there's no public version of this
 screen.
 
+Next to a round's own bet lines, Admin also shows who's currently ahead
+for the four bets the group actually runs — front 9, back 9, and overall
+individual net leaders, and the best-ball side with the best round net —
+computed live from the same hole scores and handicaps the Cup itself
+uses, just scored stroke play instead of match play. Read-only, never
+stored, and not matched to a specific dollar line since a round's bet
+labels are free text.
+
 ## Sign-in
 
 Calibrated to twelve friends once a year, not to a SaaS.

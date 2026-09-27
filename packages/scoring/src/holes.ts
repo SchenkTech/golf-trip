@@ -92,3 +92,48 @@ export function allocateStrokes(
   }
   return out;
 }
+
+/**
+ * One player's net score on each hole, in hole order -- gross minus the
+ * shots allocateStrokes gave them there. Stroke-play net, not match play:
+ * for a real-money side pool scored on total strokes rather than holes
+ * won, which is a different game from what holeWinner/scoreMatch judge a
+ * Nassau match on, even though both start from the same gross scores and
+ * the same handicap allowance.
+ *
+ * null for a hole with no gross entered yet -- never zero, since a zero
+ * would look like the best possible net score on a hole nobody has played.
+ */
+export function netByHole(
+  gross: (number | null)[],
+  playingHandicap: number,
+  strokeIndex: number[],
+): (number | null)[] {
+  const shots = allocateStrokes(playingHandicap, strokeIndex);
+  return gross.map((g, i) => (g === null ? null : g - shots[i]));
+}
+
+/**
+ * Total of a stretch of net-by-hole values (a front nine, a back nine, an
+ * eighteen), or null if any hole in that stretch hasn't been scored yet --
+ * a partial nine has no real total, not a lower one than someone who
+ * finished.
+ */
+export function netSum(net: (number | null)[]): number | null {
+  return net.some((n) => n === null) ? null : (net as number[]).reduce((a, b) => a + b, 0);
+}
+
+/**
+ * Per-hole best (lowest) net among several players' net-by-hole arrays --
+ * the same "take the better ball" comparison holeWinner makes per hole for
+ * match play, just returning the value a best-ball side actually carded
+ * instead of who won the hole. null for a hole where nobody in the group
+ * has a net yet.
+ */
+export function bestNetByHole(nets: (number | null)[][]): (number | null)[] {
+  const holes = nets[0]?.length ?? 0;
+  return Array.from({ length: holes }, (_, i) => {
+    const vals = nets.map((n) => n[i]).filter((v): v is number => v !== null);
+    return vals.length ? Math.min(...vals) : null;
+  });
+}

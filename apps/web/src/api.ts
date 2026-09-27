@@ -199,6 +199,34 @@ export interface PayoutLine {
   payout: number;
 }
 
+export interface NamedPlayer {
+  playerId: string;
+  name: string;
+}
+
+export interface NetLeaderGroup {
+  net: number;
+  leaders: NamedPlayer[];
+}
+
+export interface BestBallLeaderGroup {
+  net: number;
+  leaders: { matchId: string; side: "RED" | "BLUE"; players: NamedPlayer[] }[];
+}
+
+/** Who's currently leading each of a round's usual net-score pots --
+ *  read-only, computed fresh server-side (apps/api's lib/payoutLeaders.ts)
+ *  every time this is fetched, never attached to a specific PayoutLine
+ *  since a round's own payout lines are free text (docs/DECISIONS.md
+ *  #12). Any of the four can be null -- nobody's finished that stretch,
+ *  or no matches exist on the round yet. */
+export interface PayoutLeaders {
+  front9: NetLeaderGroup | null;
+  back9: NetLeaderGroup | null;
+  overall: NetLeaderGroup | null;
+  bestBall: BestBallLeaderGroup | null;
+}
+
 export interface AdminTeeSet {
   id: string;
   color: string;
@@ -482,6 +510,7 @@ export const api = {
   adminMovePayoutLine: (lineId: string, direction: "up" | "down") =>
     post<{ ok: true }>(`/api/admin/payouts/${lineId}/move`, { direction }),
   adminDeletePayoutLine: (lineId: string) => del<{ ok: true }>(`/api/admin/payouts/${lineId}`),
+  adminPayoutLeaders: (roundId: string) => get<PayoutLeaders>(`/api/admin/rounds/${roundId}/payout-leaders`),
 
   // Unlike photos() above, this lists everything on file regardless of
   // photosEnabled -- admin still needs to see and delete photos between
